@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flower Hover Effect</title>
+    <title>Daffodil Click Effect</title>
     <style>
         body {
             background-color: darkred;
@@ -13,38 +13,40 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            cursor: pointer;
         }
 
         .flower {
             position: relative;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 10% 10% 0 0; /* Petal shape */
+            transform: rotate(45deg);
             margin: 15px;
-            border-radius: 50%;
-            background-color: pink;
             transition: transform 0.3s ease;
         }
 
         .flower::before, .flower::after {
             content: '';
             position: absolute;
-            border-radius: 50%;
-            background-color: pink;
+            background-color: white;
+            border-radius: 10% 10% 0 0; /* Petal shape */
             transition: transform 0.3s ease;
         }
 
         .flower::before {
-            width: 70px;
-            height: 70px;
-            top: -25px;
-            left: -10px;
+            width: 60px;
+            height: 60px;
+            top: -30px;
+            left: 0;
         }
 
         .flower::after {
-            width: 70px;
-            height: 70px;
-            top: 10px;
-            left: 10px;
+            width: 60px;
+            height: 60px;
+            left: 30px;
+            top: 0;
         }
 
         .flower:hover {
@@ -57,14 +59,17 @@
     </style>
 </head>
 <body>
-    <!-- Create 20 flower divs -->
     <script>
         const flowerContainer = document.body;
-        for (let i = 0; i < 20; i++) {
+
+        function addFlower() {
             const flower = document.createElement('div');
             flower.classList.add('flower');
             flowerContainer.appendChild(flower);
         }
+
+        // Add a flower on click
+        flowerContainer.addEventListener('click', addFlower);
     </script>
 </body>
 </html>
