@@ -8,6 +8,7 @@
         body {
             background-color: darkred;
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
             align-items: center;
             height: 100vh;
@@ -15,27 +16,55 @@
         }
 
         .flower {
-            width: 100px;
-            height: 100px;
-            background-color: pink;
-            border-radius: 50%;
             position: relative;
-            margin: 20px;
+            width: 50px;
+            height: 50px;
+            margin: 15px;
+            border-radius: 50%;
+            background-color: pink;
             transition: transform 0.3s ease;
         }
 
+        .flower::before, .flower::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background-color: pink;
+            transition: transform 0.3s ease;
+        }
+
+        .flower::before {
+            width: 70px;
+            height: 70px;
+            top: -25px;
+            left: -10px;
+        }
+
+        .flower::after {
+            width: 70px;
+            height: 70px;
+            top: 10px;
+            left: 10px;
+        }
+
         .flower:hover {
-            transform: scale(1.5);
+            transform: scale(1.2);
+        }
+
+        .flower:hover::before, .flower:hover::after {
+            transform: scale(1.2);
         }
     </style>
 </head>
 <body>
-    <div class="flower"></div>
-    <div class="flower"></div>
-    <div class="flower"></div>
-
+    <!-- Create 20 flower divs -->
     <script>
-        // You can add interactive features here if needed
+        const flowerContainer = document.body;
+        for (let i = 0; i < 20; i++) {
+            const flower = document.createElement('div');
+            flower.classList.add('flower');
+            flowerContainer.appendChild(flower);
+        }
     </script>
 </body>
 </html>
