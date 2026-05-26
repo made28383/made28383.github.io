@@ -1,15 +1,151 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Lillede Mäng</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#120000;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:
+        radial-gradient(circle at top,
+        #5c0000 0%,
+        #220000 45%,
+        #090000 100%);
+}
+
+canvas{
+    display:block;
+}
+
+.ui{
+    position:absolute;
+    top:20px;
+    left:20px;
+    z-index:10;
+    color:white;
+    user-select:none;
+}
+
+.score{
+    font-size:28px;
+    font-weight:bold;
+    margin-bottom:8px;
+}
+
+.combo{
+    color:#ffbaba;
+    font-size:16px;
+}
+
+.info{
+    position:absolute;
+    bottom:20px;
+    left:20px;
+    color:rgba(255,255,255,0.55);
+    font-size:14px;
+}
+
+.gameover{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:rgba(0,0,0,0.55);
+    color:white;
+    opacity:0;
+    pointer-events:none;
+    transition:0.3s;
+}
+
+.gameover.show{
+    opacity:1;
+    pointer-events:auto;
+}
+
+.gameover h1{
+    font-size:60px;
+    margin-bottom:20px;
+}
+
+button{
+    padding:14px 28px;
+    border:none;
+    border-radius:12px;
+    font-size:18px;
+    cursor:pointer;
+    background:white;
+    transition:0.2s;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+</style>
+</head>
+<body>
+
+<div class="ui">
+    <div class="score">
+        Punktid: <span id="score">0</span>
+    </div>
+
+    <div class="combo">
+        Combo: <span id="combo">x1</span>
+    </div>
+</div>
+
+<div class="info">
+    Korja hiirega säravaid lilli ✿
+</div>
+
+<div class="gameover" id="gameover">
+    <h1>Mäng Läbi</h1>
+    <p style="margin-bottom:20px;">
+        Skoor: <span id="finalScore">0</span>
+    </p>
+
+    <button onclick="restartGame()">
+        Mängi Uuesti
+    </button>
+</div>
+
+<canvas id="canvas"></canvas>
+
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-let w, h, dpr;
+const scoreEl = document.getElementById("score");
+const comboEl = document.getElementById("combo");
+const gameoverEl = document.getElementById("gameover");
+const finalScoreEl = document.getElementById("finalScore");
+
+let w,h,dpr;
 
 function resize(){
 
     dpr = window.devicePixelRatio || 1;
 
-    w = window.innerWidth;
-    h = window.innerHeight;
+    w = innerWidth;
+    h = innerHeight;
 
     canvas.width = w * dpr;
     canvas.height = h * dpr;
@@ -18,15 +154,15 @@ function resize(){
     canvas.style.height = h + "px";
 
     ctx.setTransform(dpr,0,0,dpr,0,0);
-
-    createFlowers();
 }
+
+resize();
 
 window.addEventListener("resize", resize);
 
 const mouse = {
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2
+    x:w/2,
+    y:h/2
 };
 
 window.addEventListener("mousemove", e => {
@@ -34,46 +170,47 @@ window.addEventListener("mousemove", e => {
     mouse.y = e.clientY;
 });
 
+let score = 0;
+let combo = 1;
+let gameTime = 60;
+let gameEnded = false;
+
 class Flower{
 
-    constructor(x,y,size){
+    constructor(){
 
-        this.x = x;
-        this.y = y;
+        this.reset();
+    }
 
-        this.baseSize = size;
-        this.size = size;
+    reset(){
+
+        this.x = Math.random() * w;
+        this.y = Math.random() * h;
+
+        this.baseSize =
+            14 + Math.random() * 18;
+
+        this.size = this.baseSize;
+
+        this.petals =
+            6 + Math.floor(Math.random() * 4);
 
         this.rotation =
             Math.random() * Math.PI * 2;
 
-        this.petals =
-            6 + Math.floor(Math.random() * 3);
+        this.speed =
+            0.5 + Math.random() * 1.5;
 
-        this.floatOffset =
-            Math.random() * 1000;
+        this.glow =
+            Math.random();
 
-        this.depth =
-            0.4 + Math.random();
+        this.collected = false;
 
-        this.sway =
-            Math.random() * Math.PI * 2;
+        this.life =
+            4000 + Math.random() * 4000;
 
-        // cached petal gradient
-        this.gradient =
-            ctx.createLinearGradient(
-                0,0,0,size*2
-            );
-
-        this.gradient.addColorStop(
-            0,
-            "rgba(255,255,255,0.98)"
-        );
-
-        this.gradient.addColorStop(
-            1,
-            "rgba(255,220,220,0.9)"
-        );
+        this.spawnTime =
+            performance.now();
     }
 
     drawPetal(angle){
@@ -87,34 +224,33 @@ class Flower{
         ctx.moveTo(0,0);
 
         ctx.bezierCurveTo(
-            this.size * 0.25,
+            this.size * 0.3,
             -this.size * 0.2,
 
-            this.size * 0.8,
-            this.size * 0.4,
+            this.size * 0.9,
+            this.size * 0.5,
 
             0,
-            this.size * 1.7
+            this.size * 1.6
         );
 
         ctx.bezierCurveTo(
-            -this.size * 0.8,
-            this.size * 0.4,
+            -this.size * 0.9,
+            this.size * 0.5,
 
-            -this.size * 0.25,
+            -this.size * 0.3,
             -this.size * 0.2,
 
             0,
             0
         );
 
-        ctx.fillStyle = this.gradient;
+        ctx.fillStyle = "white";
 
-        // MUCH cheaper glow
         ctx.shadowColor =
-            "rgba(255,255,255,0.35)";
+            `rgba(255,255,255,${0.6 + this.glow})`;
 
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 12;
 
         ctx.fill();
 
@@ -123,37 +259,21 @@ class Flower{
 
     draw(time){
 
-        const floatY =
-            Math.sin(
-                time * 0.0015 +
-                this.floatOffset
-            ) * 4;
-
-        const sway =
-            Math.sin(
-                time * 0.001 +
-                this.sway
-            ) * 0.08;
-
-        // lightweight parallax
-        const px =
-            (mouse.x - w/2) *
-            0.003 *
-            this.depth;
-
-        const py =
-            (mouse.y - h/2) *
-            0.003 *
-            this.depth;
+        const pulse =
+            (Math.sin(time * 0.006) + 1) * 0.5;
 
         ctx.save();
 
         ctx.translate(
-            this.x + px,
-            this.y + py + floatY
+            this.x,
+            this.y +
+            Math.sin(time * 0.001 + this.x) * 4
         );
 
-        ctx.rotate(this.rotation + sway);
+        ctx.rotate(
+            this.rotation +
+            time * 0.0003
+        );
 
         for(let i=0;i<this.petals;i++){
 
@@ -162,7 +282,6 @@ class Flower{
             );
         }
 
-        // center
         ctx.beginPath();
 
         ctx.arc(
@@ -170,12 +289,13 @@ class Flower{
             0,
             this.size * 0.28,
             0,
-            Math.PI * 2
+            Math.PI*2
         );
 
-        ctx.fillStyle = "#f6d66b";
+        ctx.fillStyle = "#ffd966";
 
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur =
+            10 + pulse * 8;
 
         ctx.fill();
 
@@ -184,36 +304,53 @@ class Flower{
 
     update(time){
 
+        if(gameEnded) return;
+
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
 
-        // faster distance check
         const distSq = dx*dx + dy*dy;
 
-        const radius = 170;
-
+        // hover grow
         let target = this.baseSize;
 
-        if(distSq < radius * radius){
-
-            const dist =
-                Math.sqrt(distSq);
-
-            const power =
-                1 - dist / radius;
+        if(distSq < 170*170){
 
             target =
-                this.baseSize +
-                power *
-                this.baseSize *
-                1.8;
+                this.baseSize * 1.8;
         }
 
-        // FAST RESPONSE
         this.size +=
-            (target - this.size) * 0.35;
+            (target - this.size) * 0.25;
+
+        // collect
+        if(distSq < (this.size*this.size)){
+
+            this.collect();
+        }
+
+        // expire
+        if(time - this.spawnTime > this.life){
+
+            combo = 1;
+            comboEl.textContent = "x1";
+
+            this.reset();
+        }
 
         this.draw(time);
+    }
+
+    collect(){
+
+        score += 10 * combo;
+
+        combo++;
+
+        scoreEl.textContent = score;
+        comboEl.textContent = "x" + combo;
+
+        this.reset();
     }
 }
 
@@ -230,13 +367,13 @@ class Particle{
         this.y = Math.random() * h;
 
         this.size =
-            Math.random() * 1.5;
+            Math.random() * 2;
 
         this.speed =
-            0.1 + Math.random() * 0.4;
+            0.2 + Math.random() * 0.5;
 
         this.alpha =
-            0.03 + Math.random() * 0.1;
+            0.03 + Math.random() * 0.12;
     }
 
     update(){
@@ -256,7 +393,7 @@ class Particle{
             this.y,
             this.size,
             0,
-            Math.PI * 2
+            Math.PI*2
         );
 
         ctx.fillStyle =
@@ -269,35 +406,20 @@ class Particle{
 const flowers = [];
 const particles = [];
 
-function createFlowers(){
+function createGame(){
 
     flowers.length = 0;
 
-    // optimized amount
-    const amount =
-        Math.min(
-            70,
-            Math.floor((w*h)/22000)
-        );
+    for(let i=0;i<25;i++){
 
-    for(let i=0;i<amount;i++){
-
-        flowers.push(
-            new Flower(
-                Math.random()*w,
-                Math.random()*h,
-                10 + Math.random()*14
-            )
-        );
+        flowers.push(new Flower());
     }
 
     particles.length = 0;
 
     for(let i=0;i<60;i++){
 
-        particles.push(
-            new Particle()
-        );
+        particles.push(new Particle());
     }
 }
 
@@ -310,12 +432,12 @@ function backgroundGlow(){
             0,
             mouse.x,
             mouse.y,
-            240
+            220
         );
 
     gradient.addColorStop(
         0,
-        "rgba(255,80,80,0.10)"
+        "rgba(255,80,80,0.14)"
     );
 
     gradient.addColorStop(
@@ -328,9 +450,70 @@ function backgroundGlow(){
     ctx.fillRect(0,0,w,h);
 }
 
+function endGame(){
+
+    gameEnded = true;
+
+    finalScoreEl.textContent = score;
+
+    gameoverEl.classList.add("show");
+}
+
+function restartGame(){
+
+    score = 0;
+    combo = 1;
+    gameTime = 60;
+    gameEnded = false;
+
+    scoreEl.textContent = 0;
+    comboEl.textContent = "x1";
+
+    gameoverEl.classList.remove("show");
+
+    createGame();
+
+    startTimer();
+}
+
+let timerInterval;
+
+function startTimer(){
+
+    clearInterval(timerInterval);
+
+    timerInterval = setInterval(() => {
+
+        if(gameEnded) return;
+
+        gameTime--;
+
+        if(gameTime <= 0){
+
+            clearInterval(timerInterval);
+
+            endGame();
+        }
+
+    },1000);
+}
+
+function drawTimer(){
+
+    ctx.fillStyle =
+        "rgba(255,255,255,0.9)";
+
+    ctx.font = "bold 26px Arial";
+
+    ctx.fillText(
+        gameTime + "s",
+        w - 90,
+        40
+    );
+}
+
 function animate(time){
 
-    // smoother trails
     ctx.fillStyle =
         "rgba(12,0,0,0.18)";
 
@@ -344,9 +527,15 @@ function animate(time){
         f.update(time);
     });
 
+    drawTimer();
+
     requestAnimationFrame(animate);
 }
 
-resize();
+createGame();
+startTimer();
 animate();
 </script>
+
+</body>
+</html>
