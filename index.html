@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="et">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lillede Mäng</title>
 
 <style>
@@ -17,11 +16,7 @@ html,body{
     width:100%;
     height:100%;
     overflow:hidden;
-    background:#120000;
     font-family:Arial,sans-serif;
-}
-
-body{
     background:
         radial-gradient(circle at top,
         #5c0000 0%,
@@ -37,38 +32,44 @@ canvas{
     position:absolute;
     top:20px;
     left:20px;
-    z-index:10;
     color:white;
-    user-select:none;
+    z-index:10;
 }
 
 .score{
     font-size:28px;
     font-weight:bold;
-    margin-bottom:8px;
 }
 
 .combo{
-    color:#ffbaba;
-    font-size:16px;
+    margin-top:6px;
+    color:#ffcaca;
+}
+
+.timer{
+    position:absolute;
+    top:20px;
+    right:20px;
+    color:white;
+    font-size:28px;
+    font-weight:bold;
 }
 
 .info{
     position:absolute;
     bottom:20px;
     left:20px;
-    color:rgba(255,255,255,0.55);
-    font-size:14px;
+    color:rgba(255,255,255,0.6);
 }
 
 .gameover{
     position:absolute;
     inset:0;
+    background:rgba(0,0,0,0.6);
     display:flex;
-    align-items:center;
     justify-content:center;
+    align-items:center;
     flex-direction:column;
-    background:rgba(0,0,0,0.55);
     color:white;
     opacity:0;
     pointer-events:none;
@@ -80,23 +81,13 @@ canvas{
     pointer-events:auto;
 }
 
-.gameover h1{
-    font-size:60px;
-    margin-bottom:20px;
-}
-
 button{
-    padding:14px 28px;
+    margin-top:20px;
+    padding:14px 24px;
     border:none;
     border-radius:12px;
-    font-size:18px;
     cursor:pointer;
-    background:white;
-    transition:0.2s;
-}
-
-button:hover{
-    transform:scale(1.05);
+    font-size:18px;
 }
 </style>
 </head>
@@ -112,40 +103,62 @@ button:hover{
     </div>
 </div>
 
+<div class="timer" id="timer">
+    60
+</div>
+
 <div class="info">
-    Korja hiirega säravaid lilli ✿
+    Korja hiirega lilli ✿
 </div>
 
 <div class="gameover" id="gameover">
+
     <h1>Mäng Läbi</h1>
-    <p style="margin-bottom:20px;">
-        Skoor: <span id="finalScore">0</span>
-    </p>
+
+    <h2>
+        Skoor:
+        <span id="finalScore">0</span>
+    </h2>
 
     <button onclick="restartGame()">
-        Mängi Uuesti
+        Uuesti
     </button>
+
 </div>
 
 <canvas id="canvas"></canvas>
 
 <script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas =
+    document.getElementById("canvas");
 
-const scoreEl = document.getElementById("score");
-const comboEl = document.getElementById("combo");
-const gameoverEl = document.getElementById("gameover");
-const finalScoreEl = document.getElementById("finalScore");
+const ctx =
+    canvas.getContext("2d");
+
+const scoreEl =
+    document.getElementById("score");
+
+const comboEl =
+    document.getElementById("combo");
+
+const timerEl =
+    document.getElementById("timer");
+
+const gameoverEl =
+    document.getElementById("gameover");
+
+const finalScoreEl =
+    document.getElementById("finalScore");
 
 let w,h,dpr;
 
 function resize(){
 
-    dpr = window.devicePixelRatio || 1;
+    dpr =
+        window.devicePixelRatio || 1;
 
-    w = innerWidth;
-    h = innerHeight;
+    w = window.innerWidth;
+    h = window.innerHeight;
 
     canvas.width = w * dpr;
     canvas.height = h * dpr;
@@ -158,17 +171,24 @@ function resize(){
 
 resize();
 
-window.addEventListener("resize", resize);
+window.addEventListener(
+    "resize",
+    resize
+);
 
 const mouse = {
-    x:w/2,
-    y:h/2
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2
 };
 
-window.addEventListener("mousemove", e => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-});
+window.addEventListener(
+    "mousemove",
+    e => {
+
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    }
+);
 
 let score = 0;
 let combo = 1;
@@ -184,33 +204,26 @@ class Flower{
 
     reset(){
 
-        this.x = Math.random() * w;
-        this.y = Math.random() * h;
+        this.x =
+            Math.random() * w;
+
+        this.y =
+            Math.random() * h;
 
         this.baseSize =
             14 + Math.random() * 18;
 
-        this.size = this.baseSize;
+        this.size =
+            this.baseSize;
 
         this.petals =
-            6 + Math.floor(Math.random() * 4);
+            6 + Math.floor(Math.random()*4);
 
         this.rotation =
             Math.random() * Math.PI * 2;
 
-        this.speed =
-            0.5 + Math.random() * 1.5;
-
-        this.glow =
-            Math.random();
-
-        this.collected = false;
-
-        this.life =
-            4000 + Math.random() * 4000;
-
-        this.spawnTime =
-            performance.now();
+        this.floatOffset =
+            Math.random() * 1000;
     }
 
     drawPetal(angle){
@@ -224,10 +237,10 @@ class Flower{
         ctx.moveTo(0,0);
 
         ctx.bezierCurveTo(
-            this.size * 0.3,
+            this.size * 0.25,
             -this.size * 0.2,
 
-            this.size * 0.9,
+            this.size * 0.8,
             this.size * 0.5,
 
             0,
@@ -235,22 +248,23 @@ class Flower{
         );
 
         ctx.bezierCurveTo(
-            -this.size * 0.9,
+            -this.size * 0.8,
             this.size * 0.5,
 
-            -this.size * 0.3,
+            -this.size * 0.25,
             -this.size * 0.2,
 
             0,
             0
         );
 
-        ctx.fillStyle = "white";
+        ctx.fillStyle =
+            "rgba(255,255,255,0.96)";
 
         ctx.shadowColor =
-            `rgba(255,255,255,${0.6 + this.glow})`;
+            "rgba(255,255,255,0.4)";
 
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 8;
 
         ctx.fill();
 
@@ -259,20 +273,22 @@ class Flower{
 
     draw(time){
 
-        const pulse =
-            (Math.sin(time * 0.006) + 1) * 0.5;
+        const floatY =
+            Math.sin(
+                time * 0.001 +
+                this.floatOffset
+            ) * 4;
 
         ctx.save();
 
         ctx.translate(
             this.x,
-            this.y +
-            Math.sin(time * 0.001 + this.x) * 4
+            this.y + floatY
         );
 
         ctx.rotate(
             this.rotation +
-            time * 0.0003
+            time * 0.0002
         );
 
         for(let i=0;i<this.petals;i++){
@@ -289,13 +305,10 @@ class Flower{
             0,
             this.size * 0.28,
             0,
-            Math.PI*2
+            Math.PI * 2
         );
 
         ctx.fillStyle = "#ffd966";
-
-        ctx.shadowBlur =
-            10 + pulse * 8;
 
         ctx.fill();
 
@@ -306,13 +319,17 @@ class Flower{
 
         if(gameEnded) return;
 
-        const dx = mouse.x - this.x;
-        const dy = mouse.y - this.y;
+        const dx =
+            mouse.x - this.x;
 
-        const distSq = dx*dx + dy*dy;
+        const dy =
+            mouse.y - this.y;
 
-        // hover grow
-        let target = this.baseSize;
+        const distSq =
+            dx*dx + dy*dy;
+
+        let target =
+            this.baseSize;
 
         if(distSq < 170*170){
 
@@ -321,21 +338,11 @@ class Flower{
         }
 
         this.size +=
-            (target - this.size) * 0.25;
+            (target - this.size) * 0.35;
 
-        // collect
-        if(distSq < (this.size*this.size)){
+        if(distSq < this.size*this.size){
 
             this.collect();
-        }
-
-        // expire
-        if(time - this.spawnTime > this.life){
-
-            combo = 1;
-            comboEl.textContent = "x1";
-
-            this.reset();
         }
 
         this.draw(time);
@@ -354,72 +361,17 @@ class Flower{
     }
 }
 
-class Particle{
-
-    constructor(){
-
-        this.reset();
-    }
-
-    reset(){
-
-        this.x = Math.random() * w;
-        this.y = Math.random() * h;
-
-        this.size =
-            Math.random() * 2;
-
-        this.speed =
-            0.2 + Math.random() * 0.5;
-
-        this.alpha =
-            0.03 + Math.random() * 0.12;
-    }
-
-    update(){
-
-        this.y -= this.speed;
-
-        if(this.y < -5){
-
-            this.y = h + 5;
-            this.x = Math.random() * w;
-        }
-
-        ctx.beginPath();
-
-        ctx.arc(
-            this.x,
-            this.y,
-            this.size,
-            0,
-            Math.PI*2
-        );
-
-        ctx.fillStyle =
-            `rgba(255,255,255,${this.alpha})`;
-
-        ctx.fill();
-    }
-}
-
 const flowers = [];
-const particles = [];
 
-function createGame(){
+function createFlowers(){
 
     flowers.length = 0;
 
     for(let i=0;i<25;i++){
 
-        flowers.push(new Flower());
-    }
-
-    particles.length = 0;
-
-    for(let i=0;i<60;i++){
-
-        particles.push(new Particle());
+        flowers.push(
+            new Flower()
+        );
     }
 }
 
@@ -437,7 +389,7 @@ function backgroundGlow(){
 
     gradient.addColorStop(
         0,
-        "rgba(255,80,80,0.14)"
+        "rgba(255,80,80,0.12)"
     );
 
     gradient.addColorStop(
@@ -450,13 +402,53 @@ function backgroundGlow(){
     ctx.fillRect(0,0,w,h);
 }
 
-function endGame(){
+function animate(time){
 
-    gameEnded = true;
+    ctx.fillStyle =
+        "rgba(10,0,0,0.18)";
 
-    finalScoreEl.textContent = score;
+    ctx.fillRect(0,0,w,h);
 
-    gameoverEl.classList.add("show");
+    backgroundGlow();
+
+    flowers.forEach(flower => {
+        flower.update(time);
+    });
+
+    requestAnimationFrame(animate);
+}
+
+function startTimer(){
+
+    const interval =
+        setInterval(() => {
+
+        if(gameEnded){
+
+            clearInterval(interval);
+            return;
+        }
+
+        gameTime--;
+
+        timerEl.textContent =
+            gameTime;
+
+        if(gameTime <= 0){
+
+            gameEnded = true;
+
+            finalScoreEl.textContent =
+                score;
+
+            gameoverEl.classList.add(
+                "show"
+            );
+
+            clearInterval(interval);
+        }
+
+    },1000);
 }
 
 function restartGame(){
@@ -468,71 +460,18 @@ function restartGame(){
 
     scoreEl.textContent = 0;
     comboEl.textContent = "x1";
+    timerEl.textContent = 60;
 
-    gameoverEl.classList.remove("show");
+    gameoverEl.classList.remove(
+        "show"
+    );
 
-    createGame();
+    createFlowers();
 
     startTimer();
 }
 
-let timerInterval;
-
-function startTimer(){
-
-    clearInterval(timerInterval);
-
-    timerInterval = setInterval(() => {
-
-        if(gameEnded) return;
-
-        gameTime--;
-
-        if(gameTime <= 0){
-
-            clearInterval(timerInterval);
-
-            endGame();
-        }
-
-    },1000);
-}
-
-function drawTimer(){
-
-    ctx.fillStyle =
-        "rgba(255,255,255,0.9)";
-
-    ctx.font = "bold 26px Arial";
-
-    ctx.fillText(
-        gameTime + "s",
-        w - 90,
-        40
-    );
-}
-
-function animate(time){
-
-    ctx.fillStyle =
-        "rgba(12,0,0,0.18)";
-
-    ctx.fillRect(0,0,w,h);
-
-    backgroundGlow();
-
-    particles.forEach(p => p.update());
-
-    flowers.forEach(f => {
-        f.update(time);
-    });
-
-    drawTimer();
-
-    requestAnimationFrame(animate);
-}
-
-createGame();
+createFlowers();
 startTimer();
 animate();
 </script>
