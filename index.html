@@ -1,692 +1,555 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MP3 Player Widget</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Y2K Cloud MP3 Player</title>
+
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
-  body {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    font-family: 'Georgia', serif;
-    overflow: hidden;
-  }
+body{
+  min-height:100vh;
+  overflow:hidden;
 
-  /* Background page content simulation */
-  .page-bg {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255,255,255,0.08);
-    font-size: 2rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    pointer-events: none;
-    user-select: none;
-  }
+  background:
+  radial-gradient(circle at 70% 20%, #fff6a8 0%, #ffe66d 12%, transparent 18%),
+  linear-gradient(180deg,#8fe3ff 0%,#b8f2ff 40%,#ffd6f2 100%);
 
-  /* ===================== PLAYER ===================== */
-  #player {
-    position: fixed;
-    bottom: 40px;
-    right: 40px;
-    width: 340px;
-    height: 340px;
-    cursor: grab;
-    user-select: none;
-    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6)) drop-shadow(0 4px 8px rgba(0,0,0,0.4));
-    transition: filter 0.2s;
-    z-index: 9999;
-  }
-  #player:active { cursor: grabbing; filter: drop-shadow(0 28px 50px rgba(0,0,0,0.75)) drop-shadow(0 8px 16px rgba(0,0,0,0.5)); }
-  #player.dragging { transition: none; }
+  font-family:Arial,sans-serif;
+}
 
-  /* SVG fills the container */
-  #player svg {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
+/* FLOATING PLAYER */
+#player-widget{
+  position:fixed;
+  width:520px;
+  top:80px;
+  left:80px;
+  z-index:9999;
+  cursor:grab;
+  user-select:none;
 
-  /* ---- Defs: gradients & filters ---- */
-  /* All defined inline inside SVG */
+  filter:
+    drop-shadow(0 0 28px rgba(255,120,220,0.45))
+    drop-shadow(0 18px 35px rgba(120,0,80,0.35));
 
-  /* ---- Button interactivity ---- */
-  .btn-group { cursor: pointer; }
-  .btn-group:hover .btn-face { filter: brightness(1.15); }
-  .btn-group:active .btn-face { filter: brightness(0.88); transform-origin: center; transform: scale(0.96); }
+  transition:transform .15s;
+}
 
-  /* Volume slider thumb */
-  #vol-thumb { cursor: ew-resize; }
+#player-widget:active{
+  cursor:grabbing;
+}
 
-  /* Song info text */
-  #song-title-text {
-    font-family: 'Georgia', serif;
-    font-size: 7px;
-    fill: #fff;
-    opacity: 0.95;
-  }
-  #song-artist-text {
-    font-family: 'Georgia', serif;
-    font-size: 5.5px;
-    fill: rgba(255,255,255,0.7);
-  }
-  #time-text {
-    font-family: 'Courier New', monospace;
-    font-size: 5px;
-    fill: rgba(255,255,255,0.6);
-  }
+svg{
+  width:100%;
+  overflow:visible;
+}
+
+/* BUTTONS */
+
+.btn{
+  cursor:pointer;
+  transition:
+    transform .08s,
+    filter .15s;
+  transform-origin:center;
+}
+
+.btn:hover{
+  filter:brightness(1.12);
+}
+
+.btn:active{
+  transform:scale(.92);
+}
+
+/* TEXT */
+
+.info{
+  font-family:"Courier New",monospace;
+  letter-spacing:.5px;
+}
 </style>
 </head>
+
 <body>
 
-<div class="page-bg">Your page content here</div>
+<div id="player-widget">
 
-<div id="player">
-<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 420 300">
+
 <defs>
 
-  <!-- Main body gradient: rich magenta/violet -->
-  <radialGradient id="bodyGrad" cx="40%" cy="35%" r="70%">
-    <stop offset="0%" stop-color="#e060b8"/>
-    <stop offset="45%" stop-color="#c0368a"/>
-    <stop offset="100%" stop-color="#7a1055"/>
-  </radialGradient>
+<!-- MAIN PINK BODY -->
+<radialGradient id="gBody" cx="35%" cy="25%" r="80%">
+  <stop offset="0%" stop-color="#ffd8f3" stop-opacity="0.95"/>
+  <stop offset="25%" stop-color="#ff9fe0" stop-opacity="0.92"/>
+  <stop offset="55%" stop-color="#ff74cb" stop-opacity="0.88"/>
+  <stop offset="82%" stop-color="#ea4cae" stop-opacity="0.92"/>
+  <stop offset="100%" stop-color="#b51f7d" stop-opacity="0.96"/>
+</radialGradient>
 
-  <!-- Body bevel highlight (top-left rim) -->
-  <radialGradient id="bodyHighlight" cx="30%" cy="20%" r="50%">
-    <stop offset="0%" stop-color="#f590d8" stop-opacity="0.7"/>
-    <stop offset="100%" stop-color="#f590d8" stop-opacity="0"/>
-  </radialGradient>
+<!-- BLUE CLOUD -->
+<radialGradient id="gCloud" cx="45%" cy="35%" r="70%">
+  <stop offset="0%" stop-color="#ffffff"/>
+  <stop offset="45%" stop-color="#d9fbff"/>
+  <stop offset="100%" stop-color="#9fefff"/>
+</radialGradient>
 
-  <!-- Inner shadow for body depth -->
-  <radialGradient id="bodyShadow" cx="70%" cy="80%" r="55%">
-    <stop offset="0%" stop-color="#5a0038" stop-opacity="0.5"/>
-    <stop offset="100%" stop-color="#5a0038" stop-opacity="0"/>
-  </radialGradient>
+<!-- RING -->
+<radialGradient id="gRing" cx="40%" cy="25%" r="75%">
+  <stop offset="0%" stop-color="#d8ffff"/>
+  <stop offset="25%" stop-color="#8ef2ff"/>
+  <stop offset="60%" stop-color="#48c8ff"/>
+  <stop offset="100%" stop-color="#1f7cff"/>
+</radialGradient>
 
-  <!-- Handle ring gradient: hot pink -->
-  <linearGradient id="handleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%" stop-color="#ff5fae"/>
-    <stop offset="40%" stop-color="#e0258a"/>
-    <stop offset="100%" stop-color="#9b0058"/>
-  </linearGradient>
+<!-- BUTTON -->
+<radialGradient id="gBtn" cx="35%" cy="20%" r="80%">
+  <stop offset="0%" stop-color="#ffffd6"/>
+  <stop offset="35%" stop-color="#fff066"/>
+  <stop offset="70%" stop-color="#d1c600"/>
+  <stop offset="100%" stop-color="#857c00"/>
+</radialGradient>
 
-  <!-- Handle highlight -->
-  <linearGradient id="handleHL" x1="0%" y1="0%" x2="0%" y2="100%">
-    <stop offset="0%" stop-color="#ff9fd8" stop-opacity="0.8"/>
-    <stop offset="50%" stop-color="#ff9fd8" stop-opacity="0"/>
-  </linearGradient>
+<!-- METAL -->
+<radialGradient id="gMetal" cx="30%" cy="20%" r="80%">
+  <stop offset="0%" stop-color="#ffffff"/>
+  <stop offset="35%" stop-color="#e0e0e0"/>
+  <stop offset="80%" stop-color="#7a7a7a"/>
+  <stop offset="100%" stop-color="#2e2e2e"/>
+</radialGradient>
 
-  <!-- Screen gradient: deep purple/teal display -->
-  <radialGradient id="screenGrad" cx="40%" cy="35%" r="70%">
-    <stop offset="0%" stop-color="#2a1545"/>
-    <stop offset="60%" stop-color="#120a2a"/>
-    <stop offset="100%" stop-color="#06040f"/>
-  </radialGradient>
-  <!-- Screen glass shine -->
-  <linearGradient id="screenShine" x1="0%" y1="0%" x2="30%" y2="100%">
-    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
-    <stop offset="45%" stop-color="#ffffff" stop-opacity="0.04"/>
-    <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-  </linearGradient>
+<!-- BODY SHADOW -->
+<filter id="fShadow" x="-50%" y="-50%" width="200%" height="200%">
+  <feDropShadow dx="0" dy="18" stdDeviation="16"
+    flood-color="#9a2f73"
+    flood-opacity="0.45"/>
+</filter>
 
-  <!-- Yellow/gold button gradient -->
-  <radialGradient id="btnGrad" cx="40%" cy="30%" r="70%">
-    <stop offset="0%" stop-color="#f0e060"/>
-    <stop offset="55%" stop-color="#c8a820"/>
-    <stop offset="100%" stop-color="#8a6800"/>
-  </radialGradient>
-  <!-- Button highlight -->
-  <linearGradient id="btnHL" x1="20%" y1="0%" x2="20%" y2="100%">
-    <stop offset="0%" stop-color="#fffbaa" stop-opacity="0.9"/>
-    <stop offset="40%" stop-color="#fffbaa" stop-opacity="0"/>
-  </linearGradient>
-
-  <!-- Stud gradient: metallic chrome -->
-  <radialGradient id="studGrad" cx="35%" cy="30%" r="65%">
-    <stop offset="0%" stop-color="#e8e8e8"/>
-    <stop offset="40%" stop-color="#a0a0a8"/>
-    <stop offset="100%" stop-color="#404050"/>
-  </radialGradient>
-
-  <!-- Progress track -->
-  <linearGradient id="trackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-    <stop offset="0%" stop-color="#3a1a5a"/>
-    <stop offset="100%" stop-color="#180a30"/>
-  </linearGradient>
-  <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#e060ff"/>
-    <stop offset="100%" stop-color="#ff60b8"/>
-  </linearGradient>
-
-  <!-- Volume track -->
-  <linearGradient id="volTrackGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#e060ff"/>
-    <stop offset="100%" stop-color="#3a1a5a"/>
-  </linearGradient>
-
-  <!-- Clip for progress bar -->
-  <clipPath id="progressClip">
-    <rect id="progressClipRect" x="156" y="183" width="0" height="3"/>
-  </clipPath>
-
-  <!-- Filters -->
-  <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
-    <feGaussianBlur stdDeviation="2" result="blur"/>
-    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-  </filter>
-
-  <filter id="btnShadow" x="-30%" y="-30%" width="160%" height="160%">
-    <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#5a0038" flood-opacity="0.7"/>
-  </filter>
-
-  <filter id="studShadow" x="-50%" y="-50%" width="200%" height="200%">
-    <feDropShadow dx="0.5" dy="1" stdDeviation="0.8" flood-color="#000" flood-opacity="0.6"/>
-  </filter>
-
-  <filter id="screenGlow" x="-10%" y="-10%" width="120%" height="120%">
-    <feGaussianBlur stdDeviation="3" result="blur"/>
-    <feColorMatrix type="matrix" values="0.5 0 0.5 0 0  0 0 0.3 0 0  0.5 0 1 0 0  0 0 0 0.4 0" in="blur" result="colorBlur"/>
-    <feMerge><feMergeNode in="colorBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-  </filter>
+<!-- GLOW -->
+<filter id="fGlow">
+  <feGaussianBlur stdDeviation="6" result="blur"/>
+  <feMerge>
+    <feMergeNode in="blur"/>
+    <feMergeNode in="SourceGraphic"/>
+  </feMerge>
+</filter>
 
 </defs>
 
-<!-- ===== MAIN BODY ===== -->
-<!-- Outer shadow layer (slightly larger, darker) -->
-<path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
-  fill="#6a003a" opacity="0.4" transform="translate(2,4)"/>
-
-<!-- Body fill -->
-<path id="main_frame"
-  d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
-  fill="url(#bodyGrad)" stroke="#8a1060" stroke-width="1.5"/>
-
-<!-- Body highlight overlay -->
+<!-- MAIN BODY -->
 <path
-  d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
-  fill="url(#bodyHighlight)"/>
-<!-- Body shadow overlay -->
+d="
+M118 260
+Q50 260 38 210
+Q22 145 72 112
+Q95 96 115 70
+Q145 35 210 32
+Q305 28 362 95
+Q394 133 390 184
+Q384 248 320 260
+Q258 272 118 260
+"
+fill="url(#gBody)"
+stroke="#ffb7ea"
+stroke-width="3"
+filter="url(#fShadow)"
+/>
+
+<!-- TOP GLOSS -->
 <path
-  d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
-  fill="url(#bodyShadow)"/>
+d="
+M92 92
+Q145 38 240 50
+Q322 62 350 118
+Q280 82 198 88
+Q128 94 92 92
+"
+fill="rgba(255,255,255,0.35)"
+/>
 
-<!-- Bevel rim edge (stroke only, lighter) -->
+<!-- INNER TRANSLUCENT -->
 <path
-  d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
-  fill="none" stroke="#f590d8" stroke-width="0.8" stroke-opacity="0.5"/>
+d="
+M115 108
+Q180 82 255 102
+Q220 100 185 104
+Q150 108 115 108
+"
+fill="rgba(255,255,255,0.16)"
+/>
 
-<!-- ===== HANDLE/RING EDGE ===== -->
-<path id="screen_edge"
-  d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z"
-  fill="url(#handleGrad)" stroke="#b01870" stroke-width="1.2"/>
-<!-- Handle highlight -->
-<path
-  d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z"
-  fill="url(#handleHL)"/>
-<!-- Handle inner bright edge -->
-<path
-  d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z"
-  fill="none" stroke="#ff9fd8" stroke-width="0.6" stroke-opacity="0.6"/>
+<!-- CLOUD RING -->
+<ellipse
+cx="245"
+cy="115"
+rx="100"
+ry="68"
+fill="url(#gRing)"
+stroke="#c5ffff"
+stroke-width="2"
+/>
 
-<!-- ===== SCREEN ===== -->
-<!-- Screen glow aura -->
-<path
-  d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
-  fill="#8820ff" opacity="0.25" filter="url(#screenGlow)" transform="translate(0,1)"/>
+<!-- CLOUD INSIDE -->
+<ellipse
+cx="245"
+cy="115"
+rx="82"
+ry="52"
+fill="url(#gCloud)"
+/>
 
-<!-- Screen fill -->
-<path id="screen"
-  d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
-  fill="url(#screenGrad)" stroke="#6030a0" stroke-width="1.2"/>
-<!-- Screen glass shine -->
-<path
-  d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
-  fill="url(#screenShine)"/>
-<!-- Screen inner stroke highlight -->
-<path
-  d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
-  fill="none" stroke="#a060ff" stroke-width="0.5" stroke-opacity="0.6"/>
+<!-- EXTRA CLOUD SHAPES -->
+<ellipse cx="220" cy="112" rx="32" ry="18" fill="rgba(255,255,255,.6)"/>
+<ellipse cx="260" cy="102" rx="28" ry="16" fill="rgba(255,255,255,.55)"/>
+<ellipse cx="275" cy="122" rx="34" ry="18" fill="rgba(255,255,255,.45)"/>
 
-<!-- ===== SCREEN CONTENT ===== -->
-<!-- Equalizer bars (animated) -->
-<g id="eq-bars" opacity="0.7">
-  <rect id="eq1" x="135" y="118" width="3.5" height="8" rx="1" fill="#e060ff"/>
-  <rect id="eq2" x="140" y="115" width="3.5" height="11" rx="1" fill="#d040ef"/>
-  <rect id="eq3" x="145" y="120" width="3.5" height="6" rx="1" fill="#e060ff"/>
-  <rect id="eq4" x="150" y="116" width="3.5" height="10" rx="1" fill="#d040ef"/>
-  <rect id="eq5" x="155" y="119" width="3.5" height="7" rx="1" fill="#e060ff"/>
+<!-- METAL DOTS -->
+<g opacity=".95">
+
+<circle cx="188" cy="56" r="5" fill="url(#gMetal)"/>
+<circle cx="216" cy="47" r="5" fill="url(#gMetal)"/>
+<circle cx="247" cy="45" r="5" fill="url(#gMetal)"/>
+<circle cx="279" cy="50" r="5" fill="url(#gMetal)"/>
+<circle cx="307" cy="62" r="5" fill="url(#gMetal)"/>
+<circle cx="328" cy="82" r="5" fill="url(#gMetal)"/>
+<circle cx="340" cy="110" r="5" fill="url(#gMetal)"/>
+<circle cx="340" cy="138" r="5" fill="url(#gMetal)"/>
+
 </g>
 
-<!-- Song title -->
-<text id="song-title-text" x="165" y="105" text-anchor="middle">♪ Dream Sequencer</text>
-<!-- Artist -->
-<text id="song-artist-text" x="165" y="113" text-anchor="middle">Synthwave Collective</text>
+<!-- PLAY -->
+<g class="btn" id="playBtn">
 
-<!-- Progress bar track -->
-<rect x="131" y="129" width="90" height="3" rx="1.5" fill="url(#trackGrad)" stroke="#4a2080" stroke-width="0.4"/>
-<!-- Progress bar fill -->
-<rect id="progress-fill" x="131" y="129" width="0" height="3" rx="1.5" fill="url(#progressGrad)"/>
-<!-- Progress seeker knob -->
-<circle id="progress-seeker" cx="131" cy="130.5" r="3.5" fill="#ff90e0" stroke="#ffffff" stroke-width="0.8" cursor="pointer"/>
+<ellipse
+cx="88"
+cy="188"
+rx="22"
+ry="18"
+fill="url(#gBtn)"
+stroke="#7d7700"
+stroke-width="2"
+/>
 
-<!-- Time display -->
-<text id="time-current" class="time-text" x="131" y="127" font-family="'Courier New',monospace" font-size="5" fill="rgba(200,150,255,0.8)">0:00</text>
-<text id="time-total" class="time-text" x="221" y="127" font-family="'Courier New',monospace" font-size="5" fill="rgba(200,150,255,0.8)" text-anchor="end">3:45</text>
+<polygon
+points="82,178 82,198 98,188"
+fill="#4e4800"
+/>
 
-<!-- ===== DECORATIVE STUDS around the handle ===== -->
-<!-- Replicate the real stud positions from SVG -->
-<!-- top studs (using original path data stud positions) -->
-<g filter="url(#studShadow)">
-  <!-- stud positions approximated from original lines near handle -->
-  <ellipse cx="135.5" cy="86" rx="4" ry="2.5" transform="rotate(-30,135.5,86)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="154" cy="77" rx="4" ry="2.5" transform="rotate(-10,154,77)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="180" cy="72" rx="4.5" ry="2.5" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="204" cy="73" rx="4" ry="2.5" transform="rotate(10,204,73)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="228" cy="82" rx="4" ry="2.5" transform="rotate(25,228,82)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="247" cy="95" rx="3.5" ry="2.5" transform="rotate(40,247,95)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="261" cy="113" rx="2.5" ry="3.5" transform="rotate(60,261,113)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="264" cy="133" rx="2.5" ry="3.5" transform="rotate(75,264,133)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="256" cy="152" rx="4" ry="2.5" transform="rotate(-50,256,152)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="240" cy="162" rx="4" ry="2.5" transform="rotate(-20,240,162)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="205" cy="163" rx="4.5" ry="2.5" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="170" cy="158" rx="4.5" ry="2.5" transform="rotate(8,170,158)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="142" cy="148" rx="4" ry="2.5" transform="rotate(25,142,148)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="120" cy="137" rx="2.5" ry="3.5" transform="rotate(50,120,137)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="117" cy="118" rx="2.5" ry="3.5" transform="rotate(70,117,118)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
-  <ellipse cx="124" cy="99" rx="3.5" ry="2.5" transform="rotate(45,124,99)" fill="url(#studGrad)" stroke="#888" stroke-width="0.4"/>
 </g>
 
-<!-- ===== CONTROL BUTTONS ===== -->
+<!-- PREV -->
+<g class="btn" id="prevBtn">
 
-<!-- REWIND button -->
-<g id="btn-rewind" class="btn-group" onclick="onBtnClick('rewind')">
-  <!-- bevel shadow -->
-  <path d="M63.47,171.1c.09-3.76-10.41-10.53-19.42-7.09-7.37,2.82-9.75,10.94-6.83,13.73,4.64,4.44,26.12-1.32,26.25-6.65Z"
-    fill="#5a0038" transform="translate(1,2)" opacity="0.5"/>
-  <!-- face -->
-  <path class="btn-face" d="M63.47,171.1c.09-3.76-10.41-10.53-19.42-7.09-7.37,2.82-9.75,10.94-6.83,13.73,4.64,4.44,26.12-1.32,26.25-6.65Z"
-    fill="url(#btnGrad)" stroke="#907010" stroke-width="0.8" filter="url(#btnShadow)"/>
-  <!-- highlight -->
-  <path d="M63.47,171.1c.09-3.76-10.41-10.53-19.42-7.09-7.37,2.82-9.75,10.94-6.83,13.73,4.64,4.44,26.12-1.32,26.25-6.65Z"
-    fill="url(#btnHL)"/>
-  <!-- icon -->
-  <polyline points="47.51 174.12 42.42 171.62 47.51 168.4" fill="none" stroke="#5a3800" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <polyline points="52.29 174.06 47.2 171.56 52.29 168.34" fill="none" stroke="#5a3800" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse
+cx="58"
+cy="154"
+rx="18"
+ry="16"
+fill="url(#gBtn)"
+stroke="#7d7700"
+stroke-width="2"
+/>
+
+<polygon
+points="61,145 51,154 61,163"
+fill="#4e4800"
+/>
+
+<polygon
+points="70,145 60,154 70,163"
+fill="#4e4800"
+/>
+
 </g>
 
-<!-- PLAY/PAUSE (center, main) button -->
-<g id="btn-playpause" class="btn-group" onclick="onBtnClick('playpause')">
-  <path d="M67.28,172.46c-2.36-5.35,3.69-11.89,10.68-12.17,6.43-.26,12.34,4.84,13.19,9.43.63,3.4-1.15,8.49-6.91,9.82-6.45,1.48-14.91-2.43-16.96-7.07Z"
-    fill="#5a0038" transform="translate(1,2.5)" opacity="0.5"/>
-  <path class="btn-face" d="M67.28,172.46c-2.36-5.35,3.69-11.89,10.68-12.17,6.43-.26,12.34,4.84,13.19,9.43.63,3.4-1.15,8.49-6.91,9.82-6.45,1.48-14.91-2.43-16.96-7.07Z"
-    fill="url(#btnGrad)" stroke="#907010" stroke-width="0.8" filter="url(#btnShadow)"/>
-  <path d="M67.28,172.46c-2.36-5.35,3.69-11.89,10.68-12.17,6.43-.26,12.34,4.84,13.19,9.43.63,3.4-1.15,8.49-6.91,9.82-6.45,1.48-14.91-2.43-16.96-7.07Z"
-    fill="url(#btnHL)"/>
-  <!-- Play icon (default) -->
-  <g id="icon-play">
-    <polygon points="72.47 166.44 72.47 173.69 78.19 170.07 72.47 166.44" fill="#5a3800"/>
-    <line x1="81.11" y1="166.82" x2="81.11" y2="173.31" stroke="#5a3800" stroke-width="1.4" stroke-linecap="round"/>
-    <line x1="83.14" y1="166.82" x2="83.14" y2="173.31" stroke="#5a3800" stroke-width="1.4" stroke-linecap="round"/>
-  </g>
-  <!-- Pause icon (hidden) -->
-  <g id="icon-pause" display="none">
-    <rect x="71" y="166.5" width="3.5" height="7" rx="0.8" fill="#5a3800"/>
-    <rect x="76.5" y="166.5" width="3.5" height="7" rx="0.8" fill="#5a3800"/>
-  </g>
+<!-- NEXT -->
+<g class="btn" id="nextBtn">
+
+<ellipse
+cx="120"
+cy="154"
+rx="18"
+ry="16"
+fill="url(#gBtn)"
+stroke="#7d7700"
+stroke-width="2"
+/>
+
+<polygon
+points="113,145 123,154 113,163"
+fill="#4e4800"
+/>
+
+<polygon
+points="122,145 132,154 122,163"
+fill="#4e4800"
+/>
+
 </g>
 
-<!-- NEXT SONG button -->
-<g id="btn-next" class="btn-group" onclick="onBtnClick('next')">
-  <path d="M79.26,155.43c-6.53-.35-11.93-11.85-10.15-18.4,2.37-8.71,17.38-9.57,20.08-2.11,2.28,6.3-2.49,20.92-9.93,20.51Z"
-    fill="#5a0038" transform="translate(1,2.5)" opacity="0.5"/>
-  <path class="btn-face" d="M79.26,155.43c-6.53-.35-11.93-11.85-10.15-18.4,2.37-8.71,17.38-9.57,20.08-2.11,2.28,6.3-2.49,20.92-9.93,20.51Z"
-    fill="url(#btnGrad)" stroke="#907010" stroke-width="0.8" filter="url(#btnShadow)"/>
-  <path d="M79.26,155.43c-6.53-.35-11.93-11.85-10.15-18.4,2.37-8.71,17.38-9.57,20.08-2.11,2.28,6.3-2.49,20.92-9.93,20.51Z"
-    fill="url(#btnHL)"/>
-  <polyline points="75.33 139.78 79.91 142.83 75.33 145.51" fill="none" stroke="#5a3800" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="83.14" y1="139.4" x2="83.14" y2="145.89" stroke="#5a3800" stroke-width="1.4" stroke-linecap="round"/>
-  <line x1="81.11" y1="139.4" x2="81.11" y2="145.89" stroke="#5a3800" stroke-width="1.4" stroke-linecap="round"/>
+<!-- STOP -->
+<g class="btn" id="stopBtn">
+
+<ellipse
+cx="88"
+cy="228"
+rx="20"
+ry="18"
+fill="url(#gBtn)"
+stroke="#7d7700"
+stroke-width="2"
+/>
+
+<rect
+x="80"
+y="220"
+width="16"
+height="16"
+rx="2"
+fill="#4e4800"
+/>
+
 </g>
 
-<!-- FAST FORWARD button -->
-<g id="btn-ff" class="btn-group" onclick="onBtnClick('ff')">
-  <path d="M94.07,170.28c-1.38-4.73,10.64-11.58,18.87-9.67,7.75,1.8,10.51,11,4.97,14.35-6.14,3.71-22.4.25-23.84-4.68Z"
-    fill="#5a0038" transform="translate(1,2.5)" opacity="0.5"/>
-  <path class="btn-face" d="M94.07,170.28c-1.38-4.73,10.64-11.58,18.87-9.67,7.75,1.8,10.51,11,4.97,14.35-6.14,3.71-22.4.25-23.84-4.68Z"
-    fill="url(#btnGrad)" stroke="#907010" stroke-width="0.8" filter="url(#btnShadow)"/>
-  <path d="M94.07,170.28c-1.38-4.73,10.64-11.58,18.87-9.67,7.75,1.8,10.51,11,4.97,14.35-6.14,3.71-22.4.25-23.84-4.68Z"
-    fill="url(#btnHL)"/>
-  <polyline points="108.06 165.54 112.64 168.59 108.06 171.26" fill="none" stroke="#5a3800" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <polyline points="102.81 165.54 107.39 168.59 102.81 171.26" fill="none" stroke="#5a3800" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
+<!-- TITLE -->
+<text
+id="trackTitle"
+class="info"
+x="185"
+y="205"
+font-size="11"
+fill="#fff"
+>
+NO TRACK LOADED
+</text>
 
-<!-- STOP button -->
-<g id="btn-stop" class="btn-group" onclick="onBtnClick('stop')">
-  <path d="M76.63,185.19c-4.97,3.72-7.28,17.9-5.22,24.13,3.1,9.38,17.22,3.94,18.27-5.22.88-7.58-6.49-23.82-13.05-18.91Z"
-    fill="#5a0038" transform="translate(1,2.5)" opacity="0.5"/>
-  <path class="btn-face" d="M76.63,185.19c-4.97,3.72-7.28,17.9-5.22,24.13,3.1,9.38,17.22,3.94,18.27-5.22.88-7.58-6.49-23.82-13.05-18.91Z"
-    fill="url(#btnGrad)" stroke="#907010" stroke-width="0.8" filter="url(#btnShadow)"/>
-  <path d="M76.63,185.19c-4.97,3.72-7.28,17.9-5.22,24.13,3.1,9.38,17.22,3.94,18.27-5.22.88-7.58-6.49-23.82-13.05-18.91Z"
-    fill="url(#btnHL)"/>
-  <rect x="76.54" y="196.38" width="6.74" height="5.73" rx="1" fill="#5a3800"/>
-</g>
+<!-- ARTIST -->
+<text
+id="trackArtist"
+class="info"
+x="185"
+y="223"
+font-size="9"
+fill="#ffe0ff"
+>
+CLICK NEXT TO LOAD SONG
+</text>
 
-<!-- ===== VOLUME SECTION ===== -->
-<!-- Volume icon (speaker) -->
-<g opacity="0.85">
-  <polygon points="198.38 218.75 198.38 221.95 202.86 223.19 202.86 216.67 198.38 218.75" fill="#d8a0ff" stroke="#a060d0" stroke-width="0.4"/>
-  <line x1="205.39" y1="216.06" x2="207.97" y2="214.2" stroke="#d8a0ff" stroke-width="1" stroke-linecap="round"/>
-  <line x1="205.39" y1="219.93" x2="208.64" y2="219.93" stroke="#d8a0ff" stroke-width="1" stroke-linecap="round"/>
-  <line x1="205.39" y1="223.75" x2="207.75" y2="225.32" stroke="#d8a0ff" stroke-width="1" stroke-linecap="round"/>
-</g>
+<!-- TIMELINE -->
+<rect
+x="185"
+y="242"
+width="150"
+height="6"
+rx="3"
+fill="#c9499f"
+/>
 
-<!-- Volume track -->
-<rect x="178.1" y="208.54" width="48.86" height="2.5" rx="1.25" fill="#2a0840" stroke="#5a2080" stroke-width="0.4"/>
-<!-- Volume fill -->
-<rect id="vol-fill" x="178.1" y="208.54" width="24" height="2.5" rx="1.25" fill="url(#volTrackGrad)"/>
-<!-- Volume slider thumb -->
-<g id="vol-thumb">
-  <!-- bevel -->
-  <polygon id="vol-thumb-shape" points="182.36 209.44 183.31 207.72 185.36 207.72 186.37 209.44 185.16 211.16 183.31 211.16 182.36 209.44"
-    fill="url(#studGrad)" stroke="#a0a0b0" stroke-width="0.5"/>
-</g>
+<rect
+id="progress"
+x="185"
+y="242"
+width="0"
+height="6"
+rx="3"
+fill="#fff"
+/>
 
-<!-- ===== STATUS LIGHT ===== -->
-<circle id="status-light" cx="145" cy="220" r="3" fill="#ff0060" opacity="0.9">
-  <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" repeatCount="indefinite" id="statusAnim"/>
-</circle>
-<text x="151" y="223" font-family="Georgia,serif" font-size="5" fill="rgba(255,180,255,0.6)">PAUSE</text>
+<!-- KNOB -->
+<circle
+id="seekKnob"
+cx="185"
+cy="245"
+r="8"
+fill="white"
+stroke="#ff6bc7"
+stroke-width="2"
+/>
+
+<!-- TIME -->
+<text
+id="timeText"
+class="info"
+x="260"
+y="265"
+font-size="9"
+fill="#fff"
+text-anchor="middle"
+>
+0:00 / 0:00
+</text>
 
 </svg>
+
 </div>
 
+<audio id="audio"></audio>
+
 <script>
-// ===================== STATE =====================
-const state = {
-  playing: false,
-  progress: 0,       // 0–1
-  volume: 0.5,       // 0–1
-  duration: 225,     // seconds (3:45)
-  elapsed: 0,        // seconds
-  songs: [
-    { title: '♪ Dream Sequencer', artist: 'Synthwave Collective', duration: 225 },
-    { title: '♪ Neon Cascade', artist: 'Aurora Drive', duration: 198 },
-    { title: '♪ Crystal Void', artist: 'Prism Echo', duration: 242 },
-  ],
-  songIndex: 0,
-  ticker: null,
-  isDragging: false,
-};
 
-// ===================== DOM REFS =====================
-const player   = document.getElementById('player');
-const iconPlay  = document.getElementById('icon-play');
-const iconPause = document.getElementById('icon-pause');
-const progFill  = document.getElementById('progress-fill');
-const progSeek  = document.getElementById('progress-seeker');
-const volFill   = document.getElementById('vol-fill');
-const volThumb  = document.getElementById('vol-thumb');
-const volThumbShape = document.getElementById('vol-thumb-shape');
-const titleText = document.getElementById('song-title-text');
-const artistText= document.getElementById('song-artist-text');
-const timeCur   = document.getElementById('time-current');
-const timeTot   = document.getElementById('time-total');
-const statusLight = document.getElementById('status-light');
-const statusAnim  = document.getElementById('statusAnim');
-const statusLabel = statusLight.nextElementSibling;
-const eqBars    = [1,2,3,4,5].map(i => document.getElementById('ec' + i) || document.getElementById('eq' + i));
+/* =========================
+   AUDIO
+========================= */
 
-// Progress bar geometry (from SVG viewBox)
-const PROG_X = 131, PROG_W = 90;
-// Volume bar geometry
-const VOL_X = 178.1, VOL_W = 48.86;
+const audio = document.getElementById("audio");
 
-// ===================== FORMAT TIME =====================
-function fmt(s) {
-  s = Math.round(s);
-  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
-}
+const playBtn = document.getElementById("playBtn");
+const nextBtn = document.getElementById("nextBtn");
+const stopBtn = document.getElementById("stopBtn");
 
-// ===================== UPDATE UI =====================
-function updateUI() {
-  const prog = state.progress;
-  const fillW = prog * PROG_W;
-  progFill.setAttribute('width', fillW);
-  progSeek.setAttribute('cx', PROG_X + fillW);
+const progress = document.getElementById("progress");
+const knob = document.getElementById("seekKnob");
 
-  const vFill = state.volume * VOL_W;
-  volFill.setAttribute('width', vFill);
-  // move vol thumb (hexagon) - translate its center
-  const thumbCX = VOL_X + vFill;
-  const dx = thumbCX - 184.365; // original center
-  volThumb.setAttribute('transform', `translate(${dx},0)`);
+const trackTitle = document.getElementById("trackTitle");
+const trackArtist = document.getElementById("trackArtist");
+const timeText = document.getElementById("timeText");
 
-  timeCur.textContent = fmt(state.elapsed);
-  timeTot.textContent = fmt(state.duration);
-}
+let playing = false;
 
-function updateSong() {
-  const s = state.songs[state.songIndex];
-  titleText.textContent = s.title;
-  artistText.textContent = s.artist;
-  state.duration = s.duration;
-  state.elapsed = 0;
-  state.progress = 0;
-  updateUI();
-}
+/* =========================
+   LOAD SONG
+========================= */
 
-function setPlaying(val) {
-  state.playing = val;
-  iconPlay.setAttribute('display', val ? 'none' : 'inline');
-  iconPause.setAttribute('display', val ? 'inline' : 'none');
-  statusLabel.textContent = val ? 'PLAY' : 'PAUSE';
-  statusLight.style.fill = val ? '#00ff80' : '#ff0060';
-  if (val) {
-    statusAnim.setAttribute('dur','0.8s');
-    animateEQ(true);
-    state.ticker = setInterval(tick, 200);
-  } else {
-    statusAnim.setAttribute('dur','2s');
-    animateEQ(false);
-    clearInterval(state.ticker);
-    state.ticker = null;
-  }
-}
+nextBtn.addEventListener("click",()=>{
 
-// ===================== EQ ANIMATION =====================
-const eqTargets = [0,0,0,0,0];
-const eqCurrents = [8,11,6,10,7];
-const eqMax = [14,18,12,16,13];
-let eqRaf = null;
+  const input = document.createElement("input");
 
-function animateEQ(on) {
-  if (!on) {
-    cancelAnimationFrame(eqRaf);
-    // shrink all bars
-    [1,2,3,4,5].forEach((n,i) => {
-      const el = document.getElementById('eq'+n);
-      if (el) { el.setAttribute('height', 2); el.setAttribute('y', 124); }
-    });
-    return;
-  }
-  function step() {
-    [1,2,3,4,5].forEach((n,i) => {
-      const el = document.getElementById('eq'+n);
-      if (!el) return;
-      const h = 3 + Math.random() * eqMax[i];
-      const baseY = 126;
-      el.setAttribute('height', h.toFixed(1));
-      el.setAttribute('y', (baseY - h).toFixed(1));
-    });
-    eqRaf = setTimeout(() => requestAnimationFrame(step), 120 + Math.random()*80);
-  }
-  step();
-}
+  input.type = "file";
+  input.accept = "audio/*";
 
-// ===================== TICK =====================
-function tick() {
-  if (!state.playing) return;
-  state.elapsed += 0.2;
-  if (state.elapsed >= state.duration) {
-    state.elapsed = state.duration;
-    state.progress = 1;
-    updateUI();
-    nextSong();
-    return;
-  }
-  state.progress = state.elapsed / state.duration;
-  updateUI();
-}
+  input.onchange = e=>{
 
-function nextSong() {
-  setPlaying(false);
-  state.songIndex = (state.songIndex + 1) % state.songs.length;
-  updateSong();
-  setTimeout(() => setPlaying(true), 400);
-}
+    const file = e.target.files[0];
 
-// ===================== BUTTON HANDLERS =====================
-function onBtnClick(btn) {
-  if (state.isDragging) return;
-  switch(btn) {
-    case 'playpause':
-      setPlaying(!state.playing);
-      break;
-    case 'stop':
-      setPlaying(false);
-      state.elapsed = 0;
-      state.progress = 0;
-      updateUI();
-      break;
-    case 'next':
-      setPlaying(false);
-      state.songIndex = (state.songIndex + 1) % state.songs.length;
-      updateSong();
-      if (state.playing || true) setTimeout(() => setPlaying(true), 200);
-      break;
-    case 'rewind':
-      if (state.elapsed > 3) {
-        state.elapsed = 0;
-        state.progress = 0;
-        updateUI();
-      } else {
-        setPlaying(false);
-        state.songIndex = (state.songIndex - 1 + state.songs.length) % state.songs.length;
-        updateSong();
-        setTimeout(() => setPlaying(true), 200);
-      }
-      break;
-    case 'ff':
-      state.elapsed = Math.min(state.elapsed + 15, state.duration - 1);
-      state.progress = state.elapsed / state.duration;
-      updateUI();
-      break;
-  }
-}
+    if(!file) return;
 
-// ===================== PROGRESS BAR SEEK =====================
-let seekDragging = false;
-progSeek.addEventListener('mousedown', e => { seekDragging = true; e.stopPropagation(); });
+    audio.src = URL.createObjectURL(file);
 
-document.addEventListener('mousemove', e => {
-  if (!seekDragging) return;
-  const svgEl = player.querySelector('svg');
-  const rect = svgEl.getBoundingClientRect();
-  const svgW = 300; // viewBox width
-  const scaleX = svgW / rect.width;
-  const svgX = (e.clientX - rect.left) * scaleX;
-  const p = Math.max(0, Math.min(1, (svgX - PROG_X) / PROG_W));
-  state.progress = p;
-  state.elapsed = p * state.duration;
-  updateUI();
+    const name = file.name.replace(/\.[^/.]+$/,"");
+
+    const split = name.split("-");
+
+    if(split.length > 1){
+      trackArtist.textContent = split[0].trim().toUpperCase();
+      trackTitle.textContent = split[1].trim().toUpperCase();
+    }else{
+      trackTitle.textContent = name.toUpperCase();
+      trackArtist.textContent = "UNKNOWN ARTIST";
+    }
+
+    audio.play();
+    playing = true;
+  };
+
+  input.click();
+
 });
-document.addEventListener('mouseup', () => { seekDragging = false; });
 
-// ===================== VOLUME DRAG =====================
-let volDragging = false;
-volThumb.addEventListener('mousedown', e => { volDragging = true; e.stopPropagation(); });
+/* =========================
+   PLAY
+========================= */
 
-document.addEventListener('mousemove', e => {
-  if (!volDragging) return;
-  const svgEl = player.querySelector('svg');
-  const rect = svgEl.getBoundingClientRect();
-  const scaleX = 300 / rect.width;
-  const svgX = (e.clientX - rect.left) * scaleX;
-  const v = Math.max(0, Math.min(1, (svgX - VOL_X) / VOL_W));
-  state.volume = v;
-  updateUI();
+playBtn.addEventListener("click",()=>{
+
+  if(!audio.src) return;
+
+  if(playing){
+    audio.pause();
+    playing = false;
+  }else{
+    audio.play();
+    playing = true;
+  }
+
 });
-document.addEventListener('mouseup', () => { volDragging = false; });
 
-// ===================== DRAGGING PLAYER =====================
-let dragOffX = 0, dragOffY = 0, dragging = false;
+/* =========================
+   STOP
+========================= */
 
-player.addEventListener('mousedown', e => {
-  if (seekDragging || volDragging) return;
+stopBtn.addEventListener("click",()=>{
+
+  audio.pause();
+  audio.currentTime = 0;
+  playing = false;
+
+});
+
+/* =========================
+   UPDATE
+========================= */
+
+audio.addEventListener("timeupdate",()=>{
+
+  const current = audio.currentTime;
+  const duration = audio.duration || 0;
+
+  const percent = current / duration;
+
+  progress.setAttribute("width",percent * 150);
+
+  knob.setAttribute("cx",185 + percent * 150);
+
+  timeText.textContent =
+    format(current) + " / " + format(duration);
+
+});
+
+function format(t){
+
+  if(!t || isNaN(t)) return "0:00";
+
+  const m = Math.floor(t/60);
+  const s = Math.floor(t%60);
+
+  return m + ":" + String(s).padStart(2,"0");
+
+}
+
+/* =========================
+   DRAG PLAYER
+========================= */
+
+const widget = document.getElementById("player-widget");
+
+let dragging = false;
+
+let offsetX = 0;
+let offsetY = 0;
+
+widget.addEventListener("mousedown",(e)=>{
+
+  if(e.target.closest(".btn")) return;
+
   dragging = true;
-  state.isDragging = false;
-  const rect = player.getBoundingClientRect();
-  dragOffX = e.clientX - rect.left;
-  dragOffY = e.clientY - rect.top;
-  player.classList.add('dragging');
-  e.preventDefault();
+
+  offsetX = e.clientX - widget.offsetLeft;
+  offsetY = e.clientY - widget.offsetTop;
+
 });
 
-document.addEventListener('mousemove', e => {
-  if (!dragging) return;
-  state.isDragging = true;
-  const x = e.clientX - dragOffX;
-  const y = e.clientY - dragOffY;
-  player.style.left = x + 'px';
-  player.style.top  = y + 'px';
-  player.style.right = 'auto';
-  player.style.bottom = 'auto';
+document.addEventListener("mousemove",(e)=>{
+
+  if(!dragging) return;
+
+  widget.style.left = (e.clientX - offsetX) + "px";
+  widget.style.top = (e.clientY - offsetY) + "px";
+
 });
 
-document.addEventListener('mouseup', e => {
-  if (!dragging) return;
+document.addEventListener("mouseup",()=>{
+
   dragging = false;
-  player.classList.remove('dragging');
-  setTimeout(() => { state.isDragging = false; }, 50);
+
 });
 
-// Touch support
-player.addEventListener('touchstart', e => {
-  const t = e.touches[0];
-  dragging = true;
-  state.isDragging = false;
-  const rect = player.getBoundingClientRect();
-  dragOffX = t.clientX - rect.left;
-  dragOffY = t.clientY - rect.top;
-  player.classList.add('dragging');
-}, { passive: true });
-
-document.addEventListener('touchmove', e => {
-  if (!dragging) return;
-  state.isDragging = true;
-  const t = e.touches[0];
-  player.style.left = (t.clientX - dragOffX) + 'px';
-  player.style.top  = (t.clientY - dragOffY) + 'px';
-  player.style.right = 'auto';
-  player.style.bottom = 'auto';
-}, { passive: true });
-
-document.addEventListener('touchend', () => {
-  dragging = false;
-  player.classList.remove('dragging');
-  setTimeout(() => { state.isDragging = false; }, 50);
-});
-
-// ===================== INIT =====================
-updateSong();
-updateUI();
-setPlaying(false);
 </script>
+
 </body>
 </html>
