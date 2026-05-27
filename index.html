@@ -1,101 +1,221 @@
 <!DOCTYPE html>
-<html lang="et">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MP3 Player</title>
+<title>3D Sun Rhythm MP3 Player</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-  min-height:100vh;
-  background:linear-gradient(135deg,#1a0a2e 0%,#0d1a3a 50%,#1a0a2e 100%);
-  overflow:hidden;
-  font-family:'Georgia',serif;
-}
-#player{
-  position:fixed;
-  left:50%;top:50%;transform:translate(-50%,-50%);
-  width:300px;height:300px;
-  cursor:grab;
-}
-#player:active{cursor:grabbing;}
-#player.dragging{transition:none;}
-#player svg{width:100%;height:100%;overflow:visible;}
-.btn-hit{cursor:pointer;}
-.btn-hit:hover .btn-face{filter:brightness(1.18);} 
-.btn-hit:active .btn-face{filter:brightness(0.82);} 
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* Päikese animatsioon */
-#sun { transform-origin: 150px 150px; }
-.pulse {
-    animation: pulseBeat 1s infinite ease-in-out;
-}
-@keyframes pulseBeat {
-    0% { transform: scale(1); filter: brightness(1); }
-    50% { transform: scale(1.3); filter: brightness(1.5); }
-    100% { transform: scale(1); filter: brightness(1); }
-}
+  body {
+    min-height: 100vh;
+    /* Dark space background to see transparency better */
+    background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+    font-family: 'Segoe UI', sans-serif;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: 'BACKGROUND CONTENT';
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255,255,255,0.05);
+    font-size: 60px;
+    font-weight: 900;
+    pointer-events: none;
+  }
+
+  #player-widget {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 380px;
+    height: 380px;
+    cursor: grab;
+    user-select: none;
+    /* Subtle 3D tilt */
+    transform: perspective(1000px) rotateX(5deg);
+    filter: drop-shadow(0 30px 50px rgba(0,0,0,0.8));
+    z-index: 9999;
+  }
+
+  #player-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* ── 3D SHADING FILTERS ── */
+  .btn-shape { cursor: pointer; transition: 0.1s; transform-box: fill-box; transform-origin: center; }
+  .btn-shape:active { transform: scale(0.92); }
+
+  /* Sun Animation */
+  @keyframes beat {
+    0% { transform: scale(1); filter: url(#sunGlow); }
+    50% { transform: scale(1.15); filter: url(#sunGlowStrong); }
+    100% { transform: scale(1); filter: url(#sunGlow); }
+  }
+  .rhythm-active #rhythm-sun {
+    animation: beat 0.6s infinite ease-in-out;
+    transform-origin: center;
+  }
+
 </style>
 </head>
 <body>
 
-<div id="player">
-<svg id="main-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+<div id="player-widget">
+<svg id="player-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="metal3d" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
+      <feSpecularLighting in="blur" surfaceScale="5" specularConstant="0.75" specularExponent="20" lighting-color="#ffccff" result="specOut">
+        <fePointLight x="-50" y="-100" z="200"/>
+      </feSpecularLighting>
+      <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut"/>
+      <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0"/>
+    </filter>
 
-<!-- OLEMASOLEV GRAAFIKA -->
-<defs>
-  <radialGradient id="bodyG" cx="38%" cy="32%" r="60%">
-    <stop offset="0%" stop-color="#d3b7ff"/>
-    <stop offset="100%" stop-color="#5a3f90"/>
-  </radialGradient>
-</defs>
+    <filter id="sunGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="sunGlowStrong"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 
-<!-- PÄIKE -->
-<g id="sun" class="pulse">
-    <circle cx="150" cy="150" r="40" fill="#ffdd55" stroke="#ffaa00" stroke-width="6"/>
-    <g stroke="#ffcc33" stroke-width="6">
-        <line x1="150" y1="95" x2="150" y2="60"/>
-        <line x1="150" y1="205" x2="150" y2="240"/>
-        <line x1="95" y1="150" x2="60" y2="150"/>
-        <line x1="205" y1="150" x2="240" y2="150"/>
-        <line x1="110" y1="110" x2="80" y2="80"/>
-        <line x1="190" y1="110" x2="220" y2="80"/>
-        <line x1="110" y1="190" x2="80" y2="220"/>
-        <line x1="190" y1="190" x2="220" y2="220"/>
+    <mask id="screenMask">
+      <rect width="300" height="300" fill="white" />
+      <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z" fill="black" />
+    </mask>
+
+    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff700"/>
+      <stop offset="70%" stop-color="#ff8800"/>
+      <stop offset="100%" stop-color="#ff4400"/>
+    </radialGradient>
+
+    <radialGradient id="bodyGrad" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#c8328e"/><stop offset="100%" stop-color="#4a0028"/>
+    </radialGradient>
+  </defs>
+
+  <g id="rhythm-sun-container">
+     <circle id="rhythm-sun" cx="190" cy="120" r="35" fill="url(#sunGrad)" filter="url(#sunGlow)" />
+  </g>
+
+  <g mask="url(#screenMask)">
+    <path id="main_frame" filter="url(#metal3d)"
+      d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
+      fill="url(#bodyGrad)" stroke="#4a0028" stroke-width="1"
+    />
+    <path id="screen_edge" filter="url(#metal3d)"
+      d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z"
+      fill="#8B0000" stroke="#4a0000" stroke-width="2"
+    />
+  </g>
+
+  <g transform="translate(0, 5)">
+    <text x="155" y="190" id="track-name-text" text-anchor="middle" font-family="monospace" font-size="7" fill="#ff80c0" font-weight="bold">♪ IDLE</text>
+    <text x="160" y="199" id="time-display-text" text-anchor="middle" font-family="monospace" font-size="6" fill="#cc4488">0:00 / 0:00</text>
+  </g>
+
+  <line id="song_time_lenght" x1="156" y1="182" x2="246" y2="182" stroke="#4a0028" stroke-width="3" stroke-linecap="round"/>
+  <line id="seeker_track" x1="156" y1="182" x2="156" y2="182" stroke="#ff80c0" stroke-width="3" stroke-linecap="round"/>
+  <circle id="seeker1" cx="156" cy="182" r="3" fill="#fff" stroke="#999" stroke-width="0.5" style="cursor:ew-resize"/>
+
+  <g id="controls">
+    <path id="play_x2F_stop_button" class="btn-shape" fill="#ccff00" stroke="#6b7a00" d="M67.28,172.46c-2.36-5.35,3.69-11.89,10.68-12.17,6.43-.26,12.34,4.84,13.19,9.43.63,3.4-1.15,8.49-6.91,9.82-6.45,1.48-14.91-2.43-16.96-7.07Z"/>
+    <polygon id="play_icon" points="72.47 166.44 72.47 173.69 78.19 170.07" fill="#3a3a00"/>
+    <g id="pause_icon" style="display:none">
+        <rect x="73" y="166" width="2" height="8" fill="#3a3a00"/>
+        <rect x="77" y="166" width="2" height="8" fill="#3a3a00"/>
     </g>
-</g>
 
-<!-- LÕPP SVG -->
+    <path id="next_song_button" class="btn-shape" fill="#ccff00" d="M79.26,155.43c-6.53-.35-11.93-11.85-10.15-18.4,2.37-8.71,17.38-9.57,20.08-2.11,2.28,6.3-2.49,20.92-9.93,20.51Z"/>
+    <path id="close_button" class="btn-shape" fill="#ccff00" d="M76.63,185.19c-4.97,3.72-7.28,17.9-5.22,24.13,3.1,9.38,17.22,3.94,18.27-5.22.88-7.58-6.49-23.82-13.05-18.91Z"/>
+  </g>
 </svg>
 </div>
 
 <script>
-// Muusikarütmi põhinev päikese pulseerimine
-const audio = new Audio('music.mp3');
-let ctx, analyser, dataArray;
+const state = {
+  playing: false,
+  progress: 0,
+  duration: 210,
+  currentTime: 0,
+  trackName: 'Rhythm of the Sun',
+};
 
-function setupAudio() {
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = ctx.createMediaElementSource(audio);
-    analyser = ctx.createAnalyser();
-    analyser.fftSize = 128;
-    src.connect(analyser);
-    analyser.connect(ctx.destination);
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
+const widget = document.getElementById('player-widget');
+const playBtn = document.getElementById('play_x2F_stop_button');
+const playIcon = document.getElementById('play_icon');
+const pauseIcon = document.getElementById('pause_icon');
+const seekerTrack = document.getElementById('seeker_track');
+const seekerHandle = document.getElementById('seeker1');
+const trackText = document.getElementById('track-name-text');
+const timeText = document.getElementById('time-display-text');
+
+function updateUI() {
+  if (state.playing) {
+    playIcon.style.display = 'none';
+    pauseIcon.style.display = 'block';
+    widget.classList.add('rhythm-active');
+  } else {
+    playIcon.style.display = 'block';
+    pauseIcon.style.display = 'none';
+    widget.classList.remove('rhythm-active');
+  }
+
+  const PROG_X0 = 156, PROG_X1 = 246;
+  const px = PROG_X0 + state.progress * (PROG_X1 - PROG_X0);
+  seekerTrack.setAttribute('x2', px);
+  seekerHandle.setAttribute('cx', px);
+
+  trackText.textContent = '♪ ' + state.trackName;
+  timeText.textContent = formatTime(state.currentTime) + ' / ' + formatTime(state.duration);
 }
 
-function animateSun() {
-    requestAnimationFrame(animateSun);
-    analyser.getByteFrequencyData(dataArray);
-    let bass = dataArray[1];
-    let scale = 1 + bass / 200;
-    document.getElementById('sun').style.transform = `scale(${scale})`;
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + String(sec).padStart(2, '0');
 }
 
-setupAudio();
-audio.play();
-animateSun();
+let timer;
+playBtn.addEventListener('click', () => {
+  state.playing = !state.playing;
+  if (state.playing) {
+    timer = setInterval(() => {
+      state.currentTime = (state.currentTime + 1) % state.duration;
+      state.progress = state.currentTime / state.duration;
+      updateUI();
+    }, 1000);
+  } else {
+    clearInterval(timer);
+  }
+  updateUI();
+});
+
+// Draggable logic
+let isDragging = false;
+let offset = { x: 0, y: 0 };
+
+widget.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.btn-shape')) return;
+  isDragging = true;
+  offset.x = e.clientX - widget.offsetLeft;
+  offset.y = e.clientY - widget.offsetTop;
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  widget.style.left = (e.clientX - offset.x) + 'px';
+  widget.style.top = (e.clientY - offset.y) + 'px';
+  widget.style.bottom = 'auto';
+  widget.style.right = 'auto';
+});
+
+document.addEventListener('mouseup', () => isDragging = false);
+
+updateUI();
 </script>
-
 </body>
 </html>
