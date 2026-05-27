@@ -36,10 +36,12 @@
     fill: #2a1a2e;
     text-anchor: middle;
   }
+  #trail { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9998; }
 </style>
 </head>
 <body>
-<div class="page-hint">Lohista mängijat hiirega ✦ Vajuta nuppe</div>
+<canvas id="trail"></canvas>
+<div class="page-hint">Lohista mängijat hiirega ✦ Vajuta nuppe ✦ Vikerkaaresädelus järgneb sulle</div>
 
 
 <div id="player">
@@ -297,8 +299,20 @@
     <use href="#sparkle" transform="translate(272 152) scale(.9)"/>
     <use href="#sparkle" transform="translate(130 225) scale(.7)"/>
     <use href="#sparkle" transform="translate(35 195) scale(.7)"/>
+    <use href="#sparkle" transform="translate(155 75) scale(.6)"/>
+    <use href="#sparkle" transform="translate(85 165) scale(.8)"/>
+    <use href="#sparkle" transform="translate(220 250) scale(.75)"/>
+    <use href="#sparkle" transform="translate(258 175) scale(.6)"/>
 
+    <!-- Extra flowers -->
+    <use href="#flower" transform="translate(95 215) rotate(-30) scale(.9)"/>
+    <use href="#flower" transform="translate(175 215) rotate(15) scale(.8)"/>
+    <use href="#flower" transform="translate(280 175) rotate(40) scale(.7)"/>
 
+    <!-- Extra stars -->
+    <use href="#star" transform="translate(45 150) rotate(-15) scale(.75)"/>
+    <use href="#star" transform="translate(150 215) rotate(28) scale(.65)"/>
+    <use href="#star" transform="translate(225 75) rotate(-5) scale(.8)"/>
   </g>
 
   <!-- Final photographic specular pinpoint (top-left of body) -->
@@ -434,10 +448,119 @@
   }
 })();
 
+/* ---------------- Rainbow sparkle trail ---------------- */
+const trail = (function(){
+  const canvas = document.getElementById('trail');
+  const ctx = canvas.getContext('2d');
+  let DPR = Math.max(1, window.devicePixelRatio || 1);
+  function resize(){
+    DPR = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = innerWidth * DPR;
+    canvas.height = innerHeight * DPR;
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  const puffs = [];     // rainbow blobs
+  const sparkles = [];  // tiny white dots
+
+  // Rainbow band stops: red → violet (outer to inner)
+  const RAINBOW = [
+    [0.00, 'rgba(255, 70, 70, A)'],
+    [0.18, 'rgba(255,150, 60, A)'],
+    [0.34, 'rgba(255,225, 80, A)'],
+    [0.52, 'rgba(110,220,110, A)'],
+    [0.70, 'rgba( 80,170,255, A)'],
+    [0.88, 'rgba(170,110,240, A)'],
+    [1.00, 'rgba(170,110,240, 0)'],
+  ];
+
+  function spawn(x, y, n){
+    for (let i=0; i<n; i++){
+      const a = Math.random() * Math.PI * 2;
+      const sp = Math.random() * 0.18 + 0.03; // slower drift
+      puffs.push({
+        x: x + (Math.random()-.5)*34,
+        y: y + (Math.random()-.5)*34,
+        vx: Math.cos(a)*sp,
+        vy: Math.sin(a)*sp - 0.03,
+        life: 0,
+        ttl: 22 + Math.random()*14,
+        size: 34 + Math.random()*22, // wider, airier
+      });
+      // sparse sparkles
+      if (Math.random() < 0.18){
+        sparkles.push({
+          x: x + (Math.random()-.5)*36,
+          y: y + (Math.random()-.5)*36,
+          life: 0,
+          ttl: 14 + Math.random()*10,
+          size: 0.7 + Math.random()*1.1,
+        });
+      }
+    }
+  }
+
+  function frame(){
+    // gentle clear → softer trail
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(0,0,innerWidth,innerHeight);
+    ctx.restore();
+
+    ctx.globalCompositeOperation = 'lighter';
+
+    // Rainbow puffs
+    for (let i=puffs.length-1; i>=0; i--){
+      const p = puffs[i];
+      p.life++;
+      if (p.life >= p.ttl){ puffs.splice(i,1); continue; }
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.96; p.vy *= 0.96;
+      const t = p.life / p.ttl;
+      const alpha = (1 - t) * 0.26; // airier, more rainbow visible
+      const size = p.size * (1 + t*0.5);
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size);
+      for (const [stop, tpl] of RAINBOW){
+        g.addColorStop(stop, tpl.replace('A', String((tpl.endsWith('0)') ? 0 : alpha).toFixed(3))));
+      }
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, size, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Sparse white sparkles
+    for (let i=sparkles.length-1; i>=0; i--){
+      const s = sparkles[i];
+      s.life++;
+      if (s.life >= s.ttl){ sparkles.splice(i,1); continue; }
+      const t = s.life / s.ttl;
+      const a = (1 - t) * 0.5;
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.shadowColor = `rgba(255,255,255,${a*0.6})`;
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    ctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  return { spawn };
+})();
+
 /* ---------------- Dragging ---------------- */
 (function dragger(){
   const el = document.getElementById('player');
-  let dx=0, dy=0, dragging=false;
+  let dx=0, dy=0, dragging=false, lastX=0, lastY=0;
   el.addEventListener('pointerdown', e => {
     if (e.target.closest('.btn')) return;
     if (e.target.closest('#volumeGroup')) return;
@@ -448,12 +571,20 @@
     const r = el.getBoundingClientRect();
     dx = e.clientX - r.left;
     dy = e.clientY - r.top;
+    lastX = e.clientX; lastY = e.clientY;
     el.setPointerCapture(e.pointerId);
   });
   el.addEventListener('pointermove', e => {
     if (!dragging) return;
     el.style.left = (e.clientX - dx) + 'px';
     el.style.top  = (e.clientY - dy) + 'px';
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width/2;
+    const cy = r.top + r.height/2;
+    const moveD = Math.hypot(e.clientX - lastX, e.clientY - lastY);
+    const n = Math.min(6, 1 + Math.floor(moveD / 8));
+    trail.spawn(cx, cy, n);
+    lastX = e.clientX; lastY = e.clientY;
   });
   const end = () => { dragging = false; el.classList.remove('dragging'); };
   el.addEventListener('pointerup', end);
@@ -463,20 +594,57 @@
 /* ---------------- Sun rays ---------------- */
 (function buildRays(){
   const g = document.getElementById('raysPulse');
-  const count = 12;
+  // Wavy flame petals, alternating long / short — boho watercolor sun
+  const longFlame  = 'M 0 -13 C -4 -17 -3 -22 -2 -26 C -1 -30 -5 -33 -2 -36 C 0 -38 2 -36 1 -33 C 0 -29 4 -26 3 -22 C 2 -18 4 -16 0 -13 Z';
+  const shortFlame = 'M 0 -13 C -3 -16 -3 -20 -1 -23 C 0 -26 -2 -28 0 -30 C 2 -28 0 -26 1 -23 C 3 -20 3 -16 0 -13 Z';
+  const count = 16;
   for (let i=0; i<count; i++){
-    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    const w = 2.4, h = 14;
-    r.setAttribute('x', -w/2);
-    r.setAttribute('y', -h - 16);
-    r.setAttribute('width', w);
-    r.setAttribute('height', h);
-    r.setAttribute('rx', 1.2);
-    r.setAttribute('fill', 'url(#sunGrad)');
-    r.setAttribute('opacity', '.9');
-    r.setAttribute('transform', `rotate(${i * (360/count)})`);
-    g.appendChild(r);
+    const ray = document.createElementNS('http://www.w3.org/2000/svg','path');
+    ray.setAttribute('d', i % 2 === 0 ? longFlame : shortFlame);
+    ray.setAttribute('fill', 'url(#sunGrad)');
+    ray.setAttribute('opacity', '.95');
+    ray.setAttribute('stroke', '#b46410');
+    ray.setAttribute('stroke-width', '.3');
+    ray.setAttribute('stroke-linejoin', 'round');
+    ray.setAttribute('stroke-linecap', 'round');
+    ray.setAttribute('transform', `rotate(${i * (360/count)})`);
+    g.appendChild(ray);
   }
+})();
+
+/* ---------------- Sun face texture (watercolor speckles) ---------------- */
+(function decorateSun(){
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const parent = document.getElementById('sunGroup');
+  const deco = document.createElementNS(svgNS, 'g');
+  deco.setAttribute('clip-path', 'circle(11.5px at 190px 117px)');
+  deco.setAttribute('pointer-events', 'none');
+
+  // Subtle inner shadow rim for watercolor depth
+  const rim = document.createElementNS(svgNS, 'circle');
+  rim.setAttribute('cx', 190); rim.setAttribute('cy', 117);
+  rim.setAttribute('r', 11.2);
+  rim.setAttribute('fill', 'none');
+  rim.setAttribute('stroke', '#b46410');
+  rim.setAttribute('stroke-width', 0.6);
+  rim.setAttribute('opacity', 0.35);
+  deco.appendChild(rim);
+
+  // Random tiny white speckles like the reference watercolor texture
+  const seed = [0.21,0.78,0.43,0.11,0.92,0.55,0.34,0.67,0.05,0.88,0.49,0.27,0.71,0.16,0.83,0.39,0.62,0.08,0.95,0.52,0.30,0.74,0.18,0.86];
+  for (let i=0; i<22; i++){
+    const a = seed[i % seed.length] * Math.PI * 2 + i * 0.7;
+    const r = (seed[(i*3) % seed.length]) * 9.5;
+    const dot = document.createElementNS(svgNS, 'circle');
+    dot.setAttribute('cx', 190 + Math.cos(a)*r);
+    dot.setAttribute('cy', 117 + Math.sin(a)*r);
+    dot.setAttribute('r', 0.25 + seed[(i*5) % seed.length]*0.5);
+    dot.setAttribute('fill', '#fff6d8');
+    dot.setAttribute('opacity', 0.7);
+    deco.appendChild(dot);
+  }
+
+  parent.appendChild(deco);
 })();
 
 /* ---------------- State ---------------- */
