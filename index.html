@@ -1,43 +1,683 @@
-<!-- REPLACE ONLY THE MAIN BODY + SCREEN SVG PART WITH THIS -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Y2K MP3 Player</title>
 
-<!-- MAIN BODY -->
+<style>
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  width:100vw;
+  height:100vh;
+  overflow:hidden;
+
+  background:
+  radial-gradient(circle at 75% 20%, #fff6aa 0%, #ffe96a 8%, transparent 15%),
+  linear-gradient(to bottom,#8ee6ff 0%,#b9f4ff 45%,#ffd7ef 100%);
+}
+
+/* PLAYER */
+
+#player{
+  position:absolute;
+  width:620px;
+
+  left:70px;
+  top:60px;
+
+  cursor:grab;
+  user-select:none;
+
+  filter:
+  drop-shadow(0 18px 25px rgba(88,0,55,.45))
+  drop-shadow(0 4px 10px rgba(255,120,220,.35));
+
+  z-index:999;
+}
+
+#player:active{
+  cursor:grabbing;
+}
+
+svg{
+  width:100%;
+  height:auto;
+  overflow:visible;
+}
+
+/* BUTTONS */
+
+.button{
+  cursor:pointer;
+  transition:
+  transform .08s,
+  filter .15s;
+}
+
+.button:hover{
+  filter:brightness(1.08);
+}
+
+.button:active{
+  transform:translateY(2px) scale(.93);
+  transform-origin:center;
+}
+
+.info{
+  font-family:"Courier New", monospace;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="player">
+
+<svg viewBox="0 0 620 430">
+
+<defs>
+
+<!-- BODY -->
+
+<radialGradient id="bodyGrad" cx="35%" cy="25%" r="85%">
+
+  <stop offset="0%" stop-color="#ffb2e5"/>
+  <stop offset="28%" stop-color="#e771ba"/>
+  <stop offset="70%" stop-color="#c65ba3"/>
+  <stop offset="100%" stop-color="#6a2754"/>
+
+</radialGradient>
+
+<!-- SCREEN RING -->
+
+<linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+
+  <stop offset="0%" stop-color="#ff84c8"/>
+  <stop offset="50%" stop-color="#d93284"/>
+  <stop offset="100%" stop-color="#8f1c56"/>
+
+</linearGradient>
+
+<!-- BUTTON -->
+
+<radialGradient id="btnGrad" cx="35%" cy="20%" r="80%">
+
+  <stop offset="0%" stop-color="#fff9ba"/>
+  <stop offset="35%" stop-color="#eadc63"/>
+  <stop offset="75%" stop-color="#b3a424"/>
+  <stop offset="100%" stop-color="#7a700f"/>
+
+</radialGradient>
+
+<!-- METAL -->
+
+<radialGradient id="metalGrad" cx="35%" cy="20%" r="70%">
+
+  <stop offset="0%" stop-color="#ffffff"/>
+  <stop offset="40%" stop-color="#bcbcbc"/>
+  <stop offset="100%" stop-color="#2c2c2c"/>
+
+</radialGradient>
+
+<!-- CLOUD -->
+
+<radialGradient id="cloudGrad" cx="40%" cy="35%" r="80%">
+
+  <stop offset="0%" stop-color="#ffffff"/>
+  <stop offset="45%" stop-color="#f7ffff"/>
+  <stop offset="100%" stop-color="#d8ffff"/>
+
+</radialGradient>
+
+</defs>
+
+<!-- BODY -->
+
 <path
-id="main_frame"
 d="
-M104 258
-Q48 255 28 220
-Q5 178 18 128
-Q28 88 66 84
+M110 380
 
-Q92 82 108 58
-Q138 16 225 18
+Q45 378 20 330
+Q-5 285 12 205
 
-Q308 20 365 62
-Q410 94 424 152
+Q20 155 55 135
+Q92 112 120 90
 
-Q437 212 400 250
-Q370 280 322 270
+Q155 35 255 30
 
-Q260 260 205 258
-Q150 256 104 258
+Q355 28 450 85
+Q535 140 572 225
+
+Q600 288 575 345
+Q552 392 485 394
+
+Q420 394 340 380
+Q250 365 110 380
 "
-fill="url(#gBody)"
-stroke="#d47cb4"
-stroke-width="2"
+fill="url(#bodyGrad)"
 />
 
-<!-- MAIN SHADOW -->
+<!-- BOTTOM SHADOW -->
+
 <path
 d="
-M104 258
-Q48 255 28 220
-Q5 178 18 128
-Q28 88 66 84
+M110 380
 
-Q92 82 108 58
-Q138 16 225 18
+Q45 378 20 330
+Q-5 285 12 205
 
-Q308 20 365 62
-Q410 94 424 152
+Q20 155 55 135
+Q92 112 120 90
 
-Q437 212 
+Q155 35 255 30
+
+Q355 28 450 85
+Q535 140 572 225
+
+Q600 288 575 345
+Q552 392 485 394
+
+Q420 394 340 380
+Q250 365 110 380
+"
+fill="none"
+stroke="#5a1d47"
+stroke-width="20"
+stroke-linecap="round"
+opacity=".9"
+/>
+
+<!-- TOP GLOSS -->
+
+<path
+d="
+M120 120
+
+Q190 40 300 52
+Q400 65 470 125
+
+Q370 95 255 95
+Q180 95 120 120
+"
+fill="rgba(255,255,255,.23)"
+/>
+
+<!-- SCREEN RING -->
+
+<path
+d="
+M250 62
+
+Q365 40 470 102
+Q550 150 555 240
+
+Q555 275 520 283
+Q455 295 365 282
+
+Q290 270 235 248
+Q205 238 198 205
+
+Q188 160 210 120
+Q220 92 250 62
+"
+fill="url(#ringGrad)"
+/>
+
+<!-- SCREEN HOLE -->
+
+<path
+d="
+M275 78
+
+Q365 62 450 112
+Q512 150 515 225
+
+Q515 255 488 260
+
+Q432 270 368 260
+Q295 248 248 228
+
+Q225 218 220 192
+Q213 152 232 122
+
+Q245 100 275 78
+"
+fill="url(#cloudGrad)"
+/>
+
+<!-- SCREEN SHINE -->
+
+<path
+d="
+M260 95
+
+Q335 72 425 112
+Q365 100 290 105
+"
+fill="rgba(255,255,255,.32)"
+/>
+
+<!-- STUDS -->
+
+<g>
+
+<ellipse cx="335" cy="48" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(-10 335 48)"/>
+<ellipse cx="395" cy="42" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(5 395 42)"/>
+<ellipse cx="500" cy="85" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(20 500 85)"/>
+
+<ellipse cx="565" cy="220" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(90 565 220)"/>
+
+<ellipse cx="505" cy="292" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(-20 505 292)"/>
+
+<ellipse cx="360" cy="285" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(0 360 285)"/>
+
+<ellipse cx="270" cy="255" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(25 270 255)"/>
+
+<ellipse cx="215" cy="165" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(90 215 165)"/>
+
+<ellipse cx="250" cy="95" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(30 250 95)"/>
+
+</g>
+
+<!-- BUTTONS -->
+
+<!-- TOP -->
+
+<g class="button" id="loadBtn">
+
+<path
+d="
+M115 170
+Q140 145 165 170
+Q185 200 165 230
+Q140 255 115 230
+Q95 200 115 170
+"
+fill="url(#btnGrad)"
+/>
+
+<text
+x="140"
+y="212"
+text-anchor="middle"
+font-size="32"
+fill="#5d5300"
+font-family="Arial"
+>
+≫|
+</text>
+
+</g>
+
+<!-- LEFT -->
+
+<g class="button" id="rewBtn">
+
+<path
+d="
+M60 245
+Q88 220 120 245
+Q132 270 120 292
+Q88 315 60 292
+Q45 270 60 245
+"
+fill="url(#btnGrad)"
+/>
+
+<text
+x="90"
+y="283"
+text-anchor="middle"
+font-size="30"
+fill="#5d5300"
+font-family="Arial"
+>
+≪
+</text>
+
+</g>
+
+<!-- PLAY -->
+
+<g class="button" id="playBtn">
+
+<path
+d="
+M120 245
+Q148 220 180 245
+Q192 270 180 292
+Q148 315 120 292
+Q105 270 120 245
+"
+fill="url(#btnGrad)"
+/>
+
+<text
+id="playIcon"
+x="150"
+y="283"
+text-anchor="middle"
+font-size="30"
+fill="#5d5300"
+font-family="Arial"
+>
+▶||
+</text>
+
+</g>
+
+<!-- NEXT -->
+
+<g class="button" id="ffBtn">
+
+<path
+d="
+M180 245
+Q208 220 240 245
+Q252 270 240 292
+Q208 315 180 292
+Q165 270 180 245
+"
+fill="url(#btnGrad)"
+/>
+
+<text
+x="210"
+y="283"
+text-anchor="middle"
+font-size="30"
+fill="#5d5300"
+font-family="Arial"
+>
+≫
+</text>
+
+</g>
+
+<!-- STOP -->
+
+<g class="button" id="stopBtn">
+
+<path
+d="
+M120 320
+Q145 295 170 320
+Q185 350 170 385
+Q145 405 120 385
+Q100 350 120 320
+"
+fill="url(#btnGrad)"
+/>
+
+<text
+x="145"
+y="365"
+text-anchor="middle"
+font-size="30"
+fill="#5d5300"
+font-family="Arial"
+>
+□
+</text>
+
+</g>
+
+<!-- INFO -->
+
+<text
+id="title"
+class="info"
+x="285"
+y="338"
+font-size="14"
+fill="#fff"
+>
+NO TRACK LOADED
+</text>
+
+<text
+id="artist"
+class="info"
+x="285"
+y="360"
+font-size="12"
+fill="#ffd7f0"
+>
+CLICK TOP BUTTON TO LOAD SONG
+</text>
+
+<!-- PROGRESS -->
+
+<rect
+x="285"
+y="382"
+width="220"
+height="7"
+rx="4"
+fill="#8d2664"
+/>
+
+<rect
+id="progress"
+x="285"
+y="382"
+width="0"
+height="7"
+rx="4"
+fill="#ffffff"
+/>
+
+<circle
+id="knob"
+cx="285"
+cy="385"
+r="10"
+fill="#fff"
+stroke="#ff73c9"
+stroke-width="3"
+/>
+
+<!-- TIME -->
+
+<text
+id="time"
+class="info"
+x="395"
+y="410"
+font-size="12"
+text-anchor="middle"
+fill="#fff"
+>
+0:00 / 0:00
+</text>
+
+</svg>
+
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+
+/* AUDIO */
+
+const audio = document.getElementById("audio");
+
+const playBtn = document.getElementById("playBtn");
+const stopBtn = document.getElementById("stopBtn");
+const ffBtn = document.getElementById("ffBtn");
+const rewBtn = document.getElementById("rewBtn");
+const loadBtn = document.getElementById("loadBtn");
+
+const progress = document.getElementById("progress");
+const knob = document.getElementById("knob");
+
+const title = document.getElementById("title");
+const artist = document.getElementById("artist");
+const time = document.getElementById("time");
+
+let playing = false;
+
+/* LOAD SONG */
+
+loadBtn.addEventListener("click",()=>{
+
+  const input = document.createElement("input");
+
+  input.type = "file";
+  input.accept = "audio/*";
+
+  input.onchange = e=>{
+
+    const file = e.target.files[0];
+
+    if(!file) return;
+
+    audio.src = URL.createObjectURL(file);
+
+    const clean = file.name.replace(/\.[^/.]+$/,"");
+
+    const split = clean.split("-");
+
+    if(split.length > 1){
+
+      artist.textContent = split[0].trim().toUpperCase();
+      title.textContent = split[1].trim().toUpperCase();
+
+    }else{
+
+      title.textContent = clean.toUpperCase();
+      artist.textContent = "UNKNOWN ARTIST";
+
+    }
+
+    audio.play();
+    playing = true;
+
+  };
+
+  input.click();
+
+});
+
+/* PLAY */
+
+playBtn.addEventListener("click",()=>{
+
+  if(!audio.src) return;
+
+  if(playing){
+
+    audio.pause();
+    playing = false;
+
+  }else{
+
+    audio.play();
+    playing = true;
+
+  }
+
+});
+
+/* STOP */
+
+stopBtn.addEventListener("click",()=>{
+
+  audio.pause();
+  audio.currentTime = 0;
+
+  playing = false;
+
+});
+
+/* SEEK */
+
+ffBtn.addEventListener("click",()=>{
+
+  audio.currentTime += 5;
+
+});
+
+rewBtn.addEventListener("click",()=>{
+
+  audio.currentTime -= 5;
+
+});
+
+/* UPDATE */
+
+audio.addEventListener("timeupdate",()=>{
+
+  const current = audio.currentTime;
+  const duration = audio.duration || 0;
+
+  const percent = current / duration;
+
+  progress.setAttribute("width",percent * 220);
+
+  knob.setAttribute("cx",285 + percent * 220);
+
+  time.textContent =
+  format(current) + " / " + format(duration);
+
+});
+
+function format(t){
+
+  if(!t || isNaN(t)) return "0:00";
+
+  const m = Math.floor(t/60);
+  const s = Math.floor(t%60);
+
+  return m + ":" + String(s).padStart(2,"0");
+
+}
+
+/* DRAG */
+
+const player = document.getElementById("player");
+
+let drag = false;
+
+let offsetX = 0;
+let offsetY = 0;
+
+player.addEventListener("mousedown",(e)=>{
+
+  if(e.target.closest(".button")) return;
+
+  drag = true;
+
+  offsetX = e.clientX - player.offsetLeft;
+  offsetY = e.clientY - player.offsetTop;
+
+});
+
+document.addEventListener("mousemove",(e)=>{
+
+  if(!drag) return;
+
+  player.style.left = (e.clientX - offsetX) + "px";
+  player.style.top = (e.clientY - offsetY) + "px";
+
+});
+
+document.addEventListener("mouseup",()=>{
+
+  drag = false;
+
+});
+
+</script>
+
+</body>
+</html>
