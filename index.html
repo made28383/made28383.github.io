@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Corrected Realistic MP3 Player</title>
+<title>Täpne MP3 Mängija</title>
 <style>
-  body { margin: 0; height: 100vh; background: #1a1a1a; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  #player-widget { width: 500px; height: 500px; cursor: grab; user-select: none; }
+  body { margin: 0; height: 100vh; background: #1a1a1a; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: 'Courier New', monospace; }
+  #player-widget { width: 550px; height: 450px; cursor: grab; user-select: none; }
   .btn-shape { cursor: pointer; transition: 0.1s; transform-origin: center; transform-box: fill-box; }
   .btn-shape:active { transform: scale(0.95); filter: brightness(0.9); }
   
-  @keyframes sunRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .playing #sun-group { animation: sunRotate 30s linear infinite; transform-origin: 210px 115px; }
+  @keyframes sunSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .playing #sun-rays { animation: sunSpin 25s linear infinite; transform-origin: 215px 105px; }
   
-  .lcd-text { font-family: 'Courier New', monospace; font-weight: bold; fill: #ffffff; pointer-events: none; }
+  .lcd-text { font-weight: bold; fill: #ffffff; pointer-events: none; }
 </style>
 </head>
 <body>
 
 <div id="player-widget">
-<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 320 280" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <filter id="puffy" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur"/>
@@ -34,49 +34,53 @@
       <stop offset="0%" stop-color="#fffb00"/><stop offset="100%" stop-color="#ff9100"/>
     </radialGradient>
     
-    <clipPath id="screenArea">
+    <clipPath id="screenClip">
       <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z" />
     </clipPath>
   </defs>
 
-  <path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z" 
+  <path d="M103,228c-30,2-50,8-70-5-20-15-22-45-22-55-1-20,6-45,25-60,20-15,35-5,60-20,25-15,20-35,45-55,30-30,90-35,135-5,10,5,50,35,55,90,5,55-30,105-70,125-45,25-60-20-158-15Z" 
         fill="#e060aa" filter="url(#puffy)" />
 
-  <path d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z" 
-        fill="none" stroke="#f48bc4" stroke-width="8" filter="url(#puffy)" />
-  <g fill="#999" filter="url(#puffy)">
-    <ellipse cx="120" cy="120" rx="3" ry="1.5" transform="rotate(-40 120 120)" />
-    <ellipse cx="140" cy="85" rx="3" ry="1.5" transform="rotate(-10 140 85)" />
-    <ellipse cx="180" cy="75" rx="3" ry="1.5" />
-    <ellipse cx="230" cy="90" rx="3" ry="1.5" transform="rotate(30 230 90)" />
-    <ellipse cx="260" cy="130" rx="3" ry="1.5" transform="rotate(60 260 130)" />
+  <path d="M117,143c-3-10-10-35,2-60,20-50,85-50,90-50,40,0,85,25,105,65,5,10,20,40,10,60-18,35-105,30-207-15Z" 
+        fill="none" stroke="#f48bc4" stroke-width="10" filter="url(#puffy)" />
+  <g fill="#ccc" filter="url(#puffy)">
+    <circle cx="118" cy="120" r="3"/><circle cx="130" cy="85" r="3"/><circle cx="170" cy="70" r="3"/><circle cx="230" cy="80" r="3"/><circle cx="270" cy="110" r="3"/><circle cx="280" cy="155" r="3"/><circle cx="230" cy="175" r="3"/><circle cx="170" cy="170" r="3"/>
   </g>
 
-  <g clip-path="url(#screenArea)">
-    <rect width="300" height="300" fill="#000" />
-    <g id="sun-group">
-      <path d="M210,115 m-40,0 q-10,-20 10,-30 t30,-10 t30,10 t10,30 t-10,30 t-30,10 t-30,-10 t-10,-30" fill="#ff9100" opacity="0.8" transform="scale(1.5) translate(-70, -38)" />
-      <circle cx="210" cy="115" r="28" fill="url(#sunGrad)" />
-      <path d="M205,110 q5,5 10,0 t5,-5" fill="none" stroke="#aa6600" stroke-width="2" />
+  <g clip-path="url(#screenClip)">
+    <rect width="400" height="400" fill="#000" />
+    <g id="sun-rays">
+      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(0, 215, 105)" />
+      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(45, 215, 105)" />
+      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(90, 215, 105)" />
+      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(135, 215, 105)" />
+      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(180, 215, 105)" />
+      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(225, 215, 105)" />
+      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(270, 215, 105)" />
+      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(315, 215, 105)" />
     </g>
+    <circle cx="215" cy="105" r="35" fill="url(#sunGrad)" />
+    <path d="M205,105 q10,15 20,0" fill="none" stroke="#aa6600" stroke-width="3" />
   </g>
 
-  <path d="M30,180 q50,-40 120,-10 t100,0 t40,50 t-100,40 t-160,-20 z" fill="#b0e0f8" filter="url(#puffy)" />
+  <path d="M40,190 q50,-40 130,-15 t110,5 t40,60 t-100,50 t-180,-30 z" fill="#b0e0f8" filter="url(#puffy)" />
 
-  <text x="110" y="195" class="lcd-text" font-size="7" fill="#444">LAUL - LAULJA</text>
-  <line x1="110" y1="205" x2="190" y2="205" stroke="#ff8800" stroke-width="2" />
-  <polygon id="seeker-star" points="0,-4 1,-1 4,0 1,1 0,4 -1,1 -4,0 -1,-1" fill="#ffcc00" transform="translate(140, 205)" />
+  <text x="75" y="200" class="lcd-text" font-size="9" fill="#333">LAUL - LAULJA</text>
+  <line x1="75" y1="212" x2="155" y2="212" stroke="#ff8800" stroke-width="2" />
+  <polygon points="0,-4 1,-1 4,0 1,1 0,4 -1,1 -4,0 -1,-1" fill="#ffcc00" transform="translate(115, 212)" />
+  <text x="75" y="222" class="lcd-text" font-size="6" fill="#ff8800">1:12 / 2:11</text>
 
-  <g transform="translate(60, 215)">
-    <path d="M0,20 A20,20 0 0,1 40,20" fill="none" stroke="red" stroke-width="2" />
-    <path d="M2,20 A18,18 0 0,1 38,20" fill="none" stroke="orange" stroke-width="2" />
-    <path d="M4,20 A16,16 0 0,1 36,20" fill="none" stroke="yellow" stroke-width="2" />
-    <circle cx="20" cy="5" r="4" fill="#fff" filter="url(#puffy)" class="btn-shape" />
+  <g transform="translate(85, 230)">
+    <path d="M0,25 A25,25 0 0,1 50,25" fill="none" stroke="red" stroke-width="3" />
+    <path d="M3,25 A22,22 0 0,1 47,25" fill="none" stroke="orange" stroke-width="3" />
+    <path d="M6,25 A19,19 0 0,1 44,25" fill="none" stroke="yellow" stroke-width="3" />
+    <path d="M9,25 A16,16 0 0,1 41,25" fill="none" stroke="green" stroke-width="3" />
+    <circle cx="25" cy="5" r="5" fill="#fff" filter="url(#puffy)" class="btn-shape" />
   </g>
 
   <g filter="url(#puffy)">
-    <path class="btn-shape" fill="#f48bc4" d="M185,210 q10,-20 20,0 t-10,20 t-10,-20" /> <circle class="btn-shape" fill="#66ccff" cx="260" cy="220" r="10" /> <circle class="btn-shape" fill="#66ccff" cx="140" cy="180" r="8" /> <path class="btn-shape" fill="#f48bc4" transform="translate(-20,0)" d="M185,210 q10,-20 20,0 t-10,20 t-10,-20" /> </g>
-
+    <path class="btn-shape" fill="#f48bc4" d="M190,215 q15,-30 30,0 t-15,30 t-15,-30" id="play_btn" /> <path class="btn-shape" fill="#f48bc4" d="M165,215 q15,-15 30,0 t-15,15 t-15,-15" transform="rotate(-90 180 215)" /> <path class="btn-shape" fill="#f48bc4" d="M195,215 q15,-15 30,0 t-15,15 t-15,-15" transform="rotate(90 210 215)" /> <path class="btn-shape" fill="#f48bc4" d="M190,235 q15,0 15,15 t-15,15 t-15,-15 t15,-15" /> <circle class="btn-shape" fill="#66ccff" cx="290" cy="225" r="12" /> <circle class="btn-shape" fill="#66ccff" cx="150" cy="195" r="9" /> <circle class="btn-shape" fill="#66ccff" cx="65" cy="220" r="12" /> </g>
 </svg>
 </div>
 
@@ -84,13 +88,12 @@
   const widget = document.getElementById('player-widget');
   let isPlaying = false;
   widget.onclick = (e) => {
-    if(e.target.classList.contains('btn-shape')) {
+    if(e.target.id === 'play_btn') {
       isPlaying = !isPlaying;
       widget.classList.toggle('playing', isPlaying);
     }
   };
   
-  // Basic Drag
   let drag = false, ox, oy;
   widget.onmousedown = (e) => { drag = true; ox = e.clientX - widget.offsetLeft; oy = e.clientY - widget.offsetTop; };
   document.onmousemove = (e) => { if(drag) { widget.style.position='absolute'; widget.style.left=(e.clientX-ox)+'px'; widget.style.top=(e.clientY-oy)+'px'; } };
