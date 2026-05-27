@@ -3,101 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Täpne MP3 Mängija</title>
+<title>MP3 Player Copy</title>
 <style>
-  body { margin: 0; height: 100vh; background: #1a1a1a; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: 'Courier New', monospace; }
-  #player-widget { width: 550px; height: 450px; cursor: grab; user-select: none; }
-  .btn-shape { cursor: pointer; transition: 0.1s; transform-origin: center; transform-box: fill-box; }
-  .btn-shape:active { transform: scale(0.95); filter: brightness(0.9); }
+  body { margin: 0; height: 100vh; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: 'Courier New', monospace; }
+  #player-container { width: 600px; height: 450px; cursor: grab; user-select: none; position: relative; }
   
-  @keyframes sunSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .playing #sun-rays { animation: sunSpin 25s linear infinite; transform-origin: 215px 105px; }
+  /* Puffy/plastik efekt */
+  .puffy-filter { filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3)); }
   
-  .lcd-text { font-weight: bold; fill: #ffffff; pointer-events: none; }
+  /* Päikese pöörlemine */
+  @keyframes rotateSun {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .playing #sun-group { 
+    animation: rotateSun 20s linear infinite; 
+    transform-origin: 220px 100px; 
+  }
+
+  .btn { cursor: pointer; transition: transform 0.1s; transform-origin: center; transform-box: fill-box; }
+  .btn:active { transform: scale(0.92); }
 </style>
 </head>
 <body>
 
-<div id="player-widget">
-<svg viewBox="0 0 320 280" xmlns="http://www.w3.org/2000/svg">
+<div id="player-container">
+<svg viewBox="0 0 350 280" xmlns="http://www.w3.org/2000/svg" class="puffy-filter">
   <defs>
-    <filter id="puffy" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur"/>
-      <feSpecularLighting in="blur" surfaceScale="4" specularConstant="0.9" specularExponent="25" lighting-color="#ffffff" result="specOut">
-        <fePointLight x="-50" y="-100" z="200"/>
-      </feSpecularLighting>
-      <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut"/>
-      <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0"/>
+    <filter id="innerShadow">
+      <feOffset dx="1" dy="1"/>
+      <feGaussianBlur stdDeviation="1" result="offset-blur"/>
+      <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse"/>
+      <feFlood flood-color="black" flood-opacity="0.2" result="color"/>
+      <feComposite operator="in" in="color" in2="inverse" result="shadow"/>
+      <feComposite operator="over" in="shadow" in2="SourceGraphic"/>
     </filter>
-
-    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fffb00"/><stop offset="100%" stop-color="#ff9100"/>
-    </radialGradient>
     
-    <clipPath id="screenClip">
-      <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z" />
-    </clipPath>
+    <radialGradient id="sunCenter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe066"/>
+      <stop offset="100%" stop-color="#ffb300"/>
+    </radialGradient>
   </defs>
 
-  <path d="M103,228c-30,2-50,8-70-5-20-15-22-45-22-55-1-20,6-45,25-60,20-15,35-5,60-20,25-15,20-35,45-55,30-30,90-35,135-5,10,5,50,35,55,90,5,55-30,105-70,125-45,25-60-20-158-15Z" 
-        fill="#e060aa" filter="url(#puffy)" />
+  <path d="M20,180 C20,100 120,40 220,40 C320,40 330,150 280,220 C230,280 80,260 40,220 C20,200 20,180 20,180" fill="#e86eb0" stroke="#c24d8d" stroke-width="1.5"/>
 
-  <path d="M117,143c-3-10-10-35,2-60,20-50,85-50,90-50,40,0,85,25,105,65,5,10,20,40,10,60-18,35-105,30-207-15Z" 
-        fill="none" stroke="#f48bc4" stroke-width="10" filter="url(#puffy)" />
-  <g fill="#ccc" filter="url(#puffy)">
-    <circle cx="118" cy="120" r="3"/><circle cx="130" cy="85" r="3"/><circle cx="170" cy="70" r="3"/><circle cx="230" cy="80" r="3"/><circle cx="270" cy="110" r="3"/><circle cx="280" cy="155" r="3"/><circle cx="230" cy="175" r="3"/><circle cx="170" cy="170" r="3"/>
+  <path d="M125,55 C230,25 305,80 305,130 C305,180 180,180 110,145 C80,130 80,75 125,55" fill="none" stroke="#f48bc4" stroke-width="12"/>
+  <g fill="#999" stroke="#b05080" stroke-width="0.5">
+    <ellipse cx="140" cy="65" rx="4" ry="2" transform="rotate(-20 140 65)"/>
+    <ellipse cx="190" cy="50" rx="4" ry="2" transform="rotate(-5 190 50)"/>
+    <ellipse cx="250" cy="65" rx="4" ry="2" transform="rotate(25 250 65)"/>
+    <ellipse cx="295" cy="110" rx="4" ry="2" transform="rotate(70 295 110)"/>
+    <ellipse cx="265" cy="165" rx="4" ry="2" transform="rotate(10 265 165)"/>
+    <ellipse cx="200" cy="175" rx="4" ry="2"/>
+    <ellipse cx="140" cy="165" rx="4" ry="2" transform="rotate(-15 140 165)"/>
+    <ellipse cx="105" cy="120" rx="4" ry="2" transform="rotate(-60 105 120)"/>
   </g>
 
-  <g clip-path="url(#screenClip)">
-    <rect width="400" height="400" fill="#000" />
-    <g id="sun-rays">
-      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(0, 215, 105)" />
-      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(45, 215, 105)" />
-      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(90, 215, 105)" />
-      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(135, 215, 105)" />
-      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(180, 215, 105)" />
-      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(225, 215, 105)" />
-      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(270, 215, 105)" />
-      <path d="M215,105 m0,-50 q15,10 0,25 t0,25" fill="none" stroke="#ff9100" stroke-width="8" opacity="0.8" transform="rotate(315, 215, 105)" />
+  <path d="M130,60 C230,35 295,85 295,125 C295,165 185,165 120,140 C95,130 95,80 130,60" fill="#000"/>
+
+  <g id="sun-group">
+    <g id="sun-rays" fill="#ff9100">
+      <path d="M220,50 Q240,40 235,65 T230,85" transform="rotate(0, 220, 100)"/>
+      <path d="M220,50 Q240,40 235,65 T230,85" transform="rotate(45, 220, 100)"/>
+      <path d="M220,50 Q240,40 235,65 T230,85" transform="rotate(90, 220, 100)"/>
+      <path d="M220,50 Q240,40 235,65 T230,85" transform="rotate(135, 220, 100)"/>
+      <path d="M220,50 Q240,40 235,65 T230,85" transform="rotate(180, 220, 100)"/>
+      <path d="M220,50 Q240,40 235,65 T230,85" transform="rotate(225, 220, 100)"/>
+      <path d="M220,50 Q240,40 235,65 T230,85" transform="rotate(270, 220, 100)"/>
+      <path d="M220,50 Q240,40 235,65 T230,85" transform="rotate(315, 220, 100)"/>
     </g>
-    <circle cx="215" cy="105" r="35" fill="url(#sunGrad)" />
-    <path d="M205,105 q10,15 20,0" fill="none" stroke="#aa6600" stroke-width="3" />
+    <circle cx="220" cy="100" r="28" fill="url(#sunCenter)"/>
+    <path d="M210,105 Q220,115 230,105" fill="none" stroke="#b37700" stroke-width="2"/>
   </g>
 
-  <path d="M40,190 q50,-40 130,-15 t110,5 t40,60 t-100,50 t-180,-30 z" fill="#b0e0f8" filter="url(#puffy)" />
+  <path d="M45,185 Q100,145 180,165 Q260,140 310,185 Q335,235 280,250 Q160,265 70,245 Q30,225 45,185" fill="#addcf5" stroke="#8cbcd6" stroke-width="1"/>
 
-  <text x="75" y="200" class="lcd-text" font-size="9" fill="#333">LAUL - LAULJA</text>
-  <line x1="75" y1="212" x2="155" y2="212" stroke="#ff8800" stroke-width="2" />
-  <polygon points="0,-4 1,-1 4,0 1,1 0,4 -1,1 -4,0 -1,-1" fill="#ffcc00" transform="translate(115, 212)" />
-  <text x="75" y="222" class="lcd-text" font-size="6" fill="#ff8800">1:12 / 2:11</text>
+  <text x="85" y="195" font-size="8" fill="#333" font-weight="bold">LAUL - LAULJA</text>
+  <text x="85" y="210" font-size="6" fill="#f58220">1:12</text>
+  <line x1="105" y1="208" x2="175" y2="208" stroke="#f58220" stroke-width="1.5"/>
+  <polygon points="0,-3 1,-1 3,0 1,1 0,3 -1,1 -3,0 -1,-1" fill="#ffcc00" transform="translate(135, 208)"/>
+  <text x="180" y="210" font-size="6" fill="#f58220">-2:11</text>
 
-  <g transform="translate(85, 230)">
-    <path d="M0,25 A25,25 0 0,1 50,25" fill="none" stroke="red" stroke-width="3" />
-    <path d="M3,25 A22,22 0 0,1 47,25" fill="none" stroke="orange" stroke-width="3" />
-    <path d="M6,25 A19,19 0 0,1 44,25" fill="none" stroke="yellow" stroke-width="3" />
-    <path d="M9,25 A16,16 0 0,1 41,25" fill="none" stroke="green" stroke-width="3" />
-    <circle cx="25" cy="5" r="5" fill="#fff" filter="url(#puffy)" class="btn-shape" />
+  <g transform="translate(95, 220)">
+    <path d="M0,25 A25,25 0 0,1 50,25" fill="none" stroke="red" stroke-width="2.5"/>
+    <path d="M3,25 A22,22 0 0,1 47,25" fill="none" stroke="orange" stroke-width="2.5"/>
+    <path d="M6,25 A19,19 0 0,1 44,25" fill="none" stroke="yellow" stroke-width="2.5"/>
+    <path d="M9,25 A16,16 0 0,1 41,25" fill="none" stroke="green" stroke-width="2.5"/>
+    <rect x="5" y="10" width="4" height="10" fill="#3498db" rx="2" transform="rotate(-30)" class="btn"/>
   </g>
 
-  <g filter="url(#puffy)">
-    <path class="btn-shape" fill="#f48bc4" d="M190,215 q15,-30 30,0 t-15,30 t-15,-30" id="play_btn" /> <path class="btn-shape" fill="#f48bc4" d="M165,215 q15,-15 30,0 t-15,15 t-15,-15" transform="rotate(-90 180 215)" /> <path class="btn-shape" fill="#f48bc4" d="M195,215 q15,-15 30,0 t-15,15 t-15,-15" transform="rotate(90 210 215)" /> <path class="btn-shape" fill="#f48bc4" d="M190,235 q15,0 15,15 t-15,15 t-15,-15 t15,-15" /> <circle class="btn-shape" fill="#66ccff" cx="290" cy="225" r="12" /> <circle class="btn-shape" fill="#66ccff" cx="150" cy="195" r="9" /> <circle class="btn-shape" fill="#66ccff" cx="65" cy="220" r="12" /> </g>
+  <g class="btn">
+    <path d="M215,180 Q230,160 245,180 Q260,200 230,215 Q200,200 215,180" fill="#f7a9d4" stroke="#d686b1" stroke-width="1" id="play-trigger"/>
+    <text x="222" y="200" font-size="10" fill="#d686b1" pointer-events="none">▷||</text>
+    
+    <circle cx="295" cy="220" r="12" fill="#8ecff5" stroke="#76b6db" stroke-width="1"/>
+    <path d="M295,218 Q295,214 298,214 T301,218 Q301,222 295,226 Q289,222 289,218 T292,214 T295,218" fill="#e74c3c"/> <circle cx="175" cy="185" r="8" fill="#8ecff5" stroke="#76b6db" stroke-width="1"/>
+    <path d="M175,183 Q175,181 177,181 T179,183 Q179,186 175,188 Q171,186 171,183 T173,181 T175,183" fill="#e74c3c" transform="scale(0.8) translate(44, 46)"/>
+  </g>
+
 </svg>
 </div>
 
 <script>
-  const widget = document.getElementById('player-widget');
-  let isPlaying = false;
-  widget.onclick = (e) => {
-    if(e.target.id === 'play_btn') {
-      isPlaying = !isPlaying;
-      widget.classList.toggle('playing', isPlaying);
+  const container = document.getElementById('player-container');
+  const playTrigger = document.getElementById('play-trigger');
+  let playing = false;
+
+  playTrigger.onclick = () => {
+    playing = !playing;
+    container.classList.toggle('playing', playing);
+  };
+
+  // Drag logic
+  let isDown = false, offset = [0,0];
+  container.onmousedown = (e) => { 
+    if(e.target.tagName === 'path' || e.target.tagName === 'circle') {
+      isDown = true; 
+      offset = [container.offsetLeft - e.clientX, container.offsetTop - e.clientY];
     }
   };
-  
-  let drag = false, ox, oy;
-  widget.onmousedown = (e) => { drag = true; ox = e.clientX - widget.offsetLeft; oy = e.clientY - widget.offsetTop; };
-  document.onmousemove = (e) => { if(drag) { widget.style.position='absolute'; widget.style.left=(e.clientX-ox)+'px'; widget.style.top=(e.clientY-oy)+'px'; } };
-  document.onmouseup = () => drag = false;
+  document.onmousemove = (e) => {
+    if (isDown) {
+      container.style.position = 'absolute';
+      container.style.left = (e.clientX + offset[0]) + 'px';
+      container.style.top  = (e.clientY + offset[1]) + 'px';
+    }
+  };
+  document.onmouseup = () => isDown = false;
 </script>
+
 </body>
 </html>
