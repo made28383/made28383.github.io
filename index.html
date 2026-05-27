@@ -1,12 +1,14 @@
+# Y2K Cloud MP3 Player – Single HTML File
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Y2K MP3 Player</title>
 
 <style>
-
 *{
   margin:0;
   padding:0;
@@ -19,27 +21,23 @@ body{
   overflow:hidden;
 
   background:
-  radial-gradient(circle at 75% 20%, #fff6aa 0%, #ffe96a 8%, transparent 15%),
-  linear-gradient(to bottom,#8ee6ff 0%,#b9f4ff 45%,#ffd7ef 100%);
-}
+  radial-gradient(circle at 75% 15%, #fff6a3 0%, #ffe870 8%, transparent 14%),
+  linear-gradient(180deg,#8ce7ff 0%,#c8f7ff 45%,#ffd9f0 100%);
 
-/* PLAYER */
+  font-family:Arial,sans-serif;
+}
 
 #player{
   position:absolute;
-  width:620px;
-
-  left:70px;
-  top:60px;
-
-  cursor:grab;
+  width:640px;
+  left:60px;
+  top:40px;
   user-select:none;
+  cursor:grab;
 
   filter:
-  drop-shadow(0 18px 25px rgba(88,0,55,.45))
-  drop-shadow(0 4px 10px rgba(255,120,220,.35));
-
-  z-index:999;
+  drop-shadow(0 22px 30px rgba(80,0,50,.45))
+  drop-shadow(0 0 18px rgba(255,120,220,.35));
 }
 
 #player:active{
@@ -48,17 +46,13 @@ body{
 
 svg{
   width:100%;
-  height:auto;
   overflow:visible;
 }
 
-/* BUTTONS */
-
 .button{
   cursor:pointer;
-  transition:
-  transform .08s,
-  filter .15s;
+  transition:transform .08s, filter .12s;
+  transform-origin:center;
 }
 
 .button:hover{
@@ -66,503 +60,254 @@ svg{
 }
 
 .button:active{
-  transform:translateY(2px) scale(.93);
-  transform-origin:center;
+  transform:translateY(2px) scale(.94);
 }
 
 .info{
-  font-family:"Courier New", monospace;
+  font-family:"Courier New",monospace;
 }
 
 </style>
 </head>
-
 <body>
 
 <div id="player">
 
-<svg viewBox="0 0 620 430">
+<svg viewBox="0 0 700 460">
 
 <defs>
 
-<!-- BODY -->
-
-<radialGradient id="bodyGrad" cx="35%" cy="25%" r="85%">
-
-  <stop offset="0%" stop-color="#ffb2e5"/>
-  <stop offset="28%" stop-color="#e771ba"/>
-  <stop offset="70%" stop-color="#c65ba3"/>
-  <stop offset="100%" stop-color="#6a2754"/>
-
+<radialGradient id="bodyGrad" cx="30%" cy="22%" r="90%">
+  <stop offset="0%" stop-color="#ffb3e5"/>
+  <stop offset="35%" stop-color="#db69ae"/>
+  <stop offset="70%" stop-color="#bf5b9d"/>
+  <stop offset="100%" stop-color="#5b2247"/>
 </radialGradient>
-
-<!-- SCREEN RING -->
 
 <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-
-  <stop offset="0%" stop-color="#ff84c8"/>
-  <stop offset="50%" stop-color="#d93284"/>
-  <stop offset="100%" stop-color="#8f1c56"/>
-
+  <stop offset="0%" stop-color="#ff93d2"/>
+  <stop offset="50%" stop-color="#d83385"/>
+  <stop offset="100%" stop-color="#8f2456"/>
 </linearGradient>
 
-<!-- BUTTON -->
-
-<radialGradient id="btnGrad" cx="35%" cy="20%" r="80%">
-
-  <stop offset="0%" stop-color="#fff9ba"/>
-  <stop offset="35%" stop-color="#eadc63"/>
-  <stop offset="75%" stop-color="#b3a424"/>
-  <stop offset="100%" stop-color="#7a700f"/>
-
+<radialGradient id="buttonGrad" cx="35%" cy="20%" r="80%">
+  <stop offset="0%" stop-color="#fff8bc"/>
+  <stop offset="40%" stop-color="#ead85f"/>
+  <stop offset="100%" stop-color="#8d7d10"/>
 </radialGradient>
 
-<!-- METAL -->
-
-<radialGradient id="metalGrad" cx="35%" cy="20%" r="70%">
-
+<radialGradient id="metalGrad" cx="30%" cy="20%" r="80%">
   <stop offset="0%" stop-color="#ffffff"/>
-  <stop offset="40%" stop-color="#bcbcbc"/>
-  <stop offset="100%" stop-color="#2c2c2c"/>
-
-</radialGradient>
-
-<!-- CLOUD -->
-
-<radialGradient id="cloudGrad" cx="40%" cy="35%" r="80%">
-
-  <stop offset="0%" stop-color="#ffffff"/>
-  <stop offset="45%" stop-color="#f7ffff"/>
-  <stop offset="100%" stop-color="#d8ffff"/>
-
+  <stop offset="50%" stop-color="#b8b8b8"/>
+  <stop offset="100%" stop-color="#2a2a2a"/>
 </radialGradient>
 
 </defs>
 
-<!-- BODY -->
-
+<!-- MAIN BODY -->
 <path
-d="
-M110 380
+ d="
+ M115 390
+ Q45 388 18 340
+ Q-6 292 10 205
 
-Q45 378 20 330
-Q-5 285 12 205
+ Q18 150 58 130
+ Q98 112 120 78
 
-Q20 155 55 135
-Q92 112 120 90
+ Q155 18 265 18
 
-Q155 35 255 30
+ Q390 18 500 88
+ Q590 145 628 230
 
-Q355 28 450 85
-Q535 140 572 225
+ Q655 290 628 350
+ Q602 405 520 408
 
-Q600 288 575 345
-Q552 392 485 394
-
-Q420 394 340 380
-Q250 365 110 380
-"
-fill="url(#bodyGrad)"
+ Q430 406 350 392
+ Q250 376 115 390
+ "
+ fill="url(#bodyGrad)"
 />
 
-<!-- BOTTOM SHADOW -->
-
+<!-- DARK BOTTOM EDGE -->
 <path
-d="
-M110 380
-
-Q45 378 20 330
-Q-5 285 12 205
-
-Q20 155 55 135
-Q92 112 120 90
-
-Q155 35 255 30
-
-Q355 28 450 85
-Q535 140 572 225
-
-Q600 288 575 345
-Q552 392 485 394
-
-Q420 394 340 380
-Q250 365 110 380
-"
-fill="none"
-stroke="#5a1d47"
-stroke-width="20"
-stroke-linecap="round"
-opacity=".9"
+ d="
+ M110 390
+ Q55 388 28 345
+ Q10 318 18 300
+ Q65 360 180 360
+ Q290 355 370 365
+ Q470 378 520 374
+ Q585 372 620 345
+ "
+ fill="rgba(70,0,40,.65)"
 />
 
 <!-- TOP GLOSS -->
-
 <path
-d="
-M120 120
+ d="
+ M120 120
+ Q200 42 325 58
+ Q430 72 515 140
 
-Q190 40 300 52
-Q400 65 470 125
-
-Q370 95 255 95
-Q180 95 120 120
-"
-fill="rgba(255,255,255,.23)"
+ Q410 98 285 102
+ Q180 104 120 120
+ "
+ fill="rgba(255,255,255,.22)"
 />
 
-<!-- SCREEN RING -->
-
+<!-- RING -->
 <path
-d="
-M250 62
+ d="
+ M285 52
+ Q395 30 500 90
+ Q590 140 602 240
 
-Q365 40 470 102
-Q550 150 555 240
+ Q604 276 572 286
 
-Q555 275 520 283
-Q455 295 365 282
+ Q510 300 410 292
+ Q300 280 235 255
 
-Q290 270 235 248
-Q205 238 198 205
+ Q205 242 198 208
+ Q192 160 218 112
 
-Q188 160 210 120
-Q220 92 250 62
-"
-fill="url(#ringGrad)"
+ Q235 80 285 52
+ "
+ fill="url(#ringGrad)"
 />
 
-<!-- SCREEN HOLE -->
-
+<!-- INNER SCREEN -->
 <path
-d="
-M275 78
+ d="
+ M312 72
+ Q402 58 482 108
 
-Q365 62 450 112
-Q512 150 515 225
+ Q552 150 560 225
 
-Q515 255 488 260
+ Q562 255 535 260
 
-Q432 270 368 260
-Q295 248 248 228
+ Q470 270 405 262
+ Q315 250 260 228
 
-Q225 218 220 192
-Q213 152 232 122
+ Q235 216 230 190
+ Q225 150 245 118
 
-Q245 100 275 78
-"
-fill="url(#cloudGrad)"
+ Q262 92 312 72
+ "
+ fill="#f4f4f4"
 />
 
-<!-- SCREEN SHINE -->
-
-<path
-d="
-M260 95
-
-Q335 72 425 112
-Q365 100 290 105
-"
-fill="rgba(255,255,255,.32)"
-/>
-
-<!-- STUDS -->
-
+<!-- SCREW STUDS -->
 <g>
-
-<ellipse cx="335" cy="48" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(-10 335 48)"/>
-<ellipse cx="395" cy="42" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(5 395 42)"/>
-<ellipse cx="500" cy="85" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(20 500 85)"/>
-
-<ellipse cx="565" cy="220" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(90 565 220)"/>
-
-<ellipse cx="505" cy="292" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(-20 505 292)"/>
-
-<ellipse cx="360" cy="285" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(0 360 285)"/>
-
-<ellipse cx="270" cy="255" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(25 270 255)"/>
-
-<ellipse cx="215" cy="165" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(90 215 165)"/>
-
-<ellipse cx="250" cy="95" rx="10" ry="5" fill="url(#metalGrad)" transform="rotate(30 250 95)"/>
-
+<ellipse cx="372" cy="40" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(-10 372 40)"/>
+<ellipse cx="440" cy="36" rx="11" ry="5" fill="url(#metalGrad)"/>
+<ellipse cx="560" cy="90" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(25 560 90)"/>
+<ellipse cx="610" cy="225" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(90 610 225)"/>
+<ellipse cx="548" cy="295" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(-25 548 295)"/>
+<ellipse cx="402" cy="286" rx="11" ry="5" fill="url(#metalGrad)"/>
+<ellipse cx="255" cy="245" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(25 255 245)"/>
+<ellipse cx="214" cy="160" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(90 214 160)"/>
+<ellipse cx="270" cy="92" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(35 270 92)"/>
 </g>
 
 <!-- BUTTONS -->
 
-<!-- TOP -->
-
 <g class="button" id="loadBtn">
-
-<path
-d="
-M115 170
-Q140 145 165 170
-Q185 200 165 230
-Q140 255 115 230
-Q95 200 115 170
-"
-fill="url(#btnGrad)"
-/>
-
-<text
-x="140"
-y="212"
-text-anchor="middle"
-font-size="32"
-fill="#5d5300"
-font-family="Arial"
->
-≫|
-</text>
-
+<path d="M120 170 Q145 140 175 170 Q190 205 170 235 Q145 255 118 235 Q95 205 120 170" fill="url(#buttonGrad)"/>
+<text x="145" y="210" text-anchor="middle" font-size="28" fill="#5d5100">≫|</text>
 </g>
-
-<!-- LEFT -->
 
 <g class="button" id="rewBtn">
-
-<path
-d="
-M60 245
-Q88 220 120 245
-Q132 270 120 292
-Q88 315 60 292
-Q45 270 60 245
-"
-fill="url(#btnGrad)"
-/>
-
-<text
-x="90"
-y="283"
-text-anchor="middle"
-font-size="30"
-fill="#5d5300"
-font-family="Arial"
->
-≪
-</text>
-
+<path d="M55 255 Q90 225 125 255 Q135 280 122 302 Q88 320 58 300 Q40 278 55 255" fill="url(#buttonGrad)"/>
+<text x="88" y="290" text-anchor="middle" font-size="28" fill="#5d5100">≪</text>
 </g>
-
-<!-- PLAY -->
 
 <g class="button" id="playBtn">
-
-<path
-d="
-M120 245
-Q148 220 180 245
-Q192 270 180 292
-Q148 315 120 292
-Q105 270 120 245
-"
-fill="url(#btnGrad)"
-/>
-
-<text
-id="playIcon"
-x="150"
-y="283"
-text-anchor="middle"
-font-size="30"
-fill="#5d5300"
-font-family="Arial"
->
-▶||
-</text>
-
+<path d="M125 255 Q155 225 188 255 Q200 280 188 302 Q155 320 125 300 Q108 278 125 255" fill="url(#buttonGrad)"/>
+<text id="playText" x="157" y="290" text-anchor="middle" font-size="28" fill="#5d5100">▶</text>
 </g>
-
-<!-- NEXT -->
 
 <g class="button" id="ffBtn">
-
-<path
-d="
-M180 245
-Q208 220 240 245
-Q252 270 240 292
-Q208 315 180 292
-Q165 270 180 245
-"
-fill="url(#btnGrad)"
-/>
-
-<text
-x="210"
-y="283"
-text-anchor="middle"
-font-size="30"
-fill="#5d5300"
-font-family="Arial"
->
-≫
-</text>
-
+<path d="M195 255 Q228 225 260 255 Q273 280 260 302 Q228 320 198 300 Q180 278 195 255" fill="url(#buttonGrad)"/>
+<text x="228" y="290" text-anchor="middle" font-size="28" fill="#5d5100">≫</text>
 </g>
-
-<!-- STOP -->
 
 <g class="button" id="stopBtn">
-
-<path
-d="
-M120 320
-Q145 295 170 320
-Q185 350 170 385
-Q145 405 120 385
-Q100 350 120 320
-"
-fill="url(#btnGrad)"
-/>
-
-<text
-x="145"
-y="365"
-text-anchor="middle"
-font-size="30"
-fill="#5d5300"
-font-family="Arial"
->
-□
-</text>
-
+<path d="M122 330 Q150 300 180 330 Q195 360 180 398 Q150 420 122 398 Q98 360 122 330" fill="url(#buttonGrad)"/>
+<text x="150" y="375" text-anchor="middle" font-size="30" fill="#5d5100">□</text>
 </g>
 
-<!-- INFO -->
+<!-- TEXT -->
 
-<text
-id="title"
-class="info"
-x="285"
-y="338"
-font-size="14"
-fill="#fff"
->
-NO TRACK LOADED
-</text>
-
-<text
-id="artist"
-class="info"
-x="285"
-y="360"
-font-size="12"
-fill="#ffd7f0"
->
-CLICK TOP BUTTON TO LOAD SONG
-</text>
+<text id="songTitle" class="info" x="300" y="350" font-size="15" fill="#fff">NO TRACK LOADED</text>
+<text id="songArtist" class="info" x="300" y="372" font-size="12" fill="#ffd7ef">CLICK TOP BUTTON TO LOAD SONG</text>
 
 <!-- PROGRESS -->
 
-<rect
-x="285"
-y="382"
-width="220"
-height="7"
-rx="4"
-fill="#8d2664"
-/>
+<rect x="300" y="392" width="240" height="8" rx="4" fill="#8d2664"/>
+<rect id="progress" x="300" y="392" width="0" height="8" rx="4" fill="#fff"/>
 
-<rect
-id="progress"
-x="285"
-y="382"
-width="0"
-height="7"
-rx="4"
-fill="#ffffff"
-/>
+<circle id="knob" cx="300" cy="396" r="10" fill="#fff" stroke="#ff73c9" stroke-width="3"/>
 
-<circle
-id="knob"
-cx="285"
-cy="385"
-r="10"
-fill="#fff"
-stroke="#ff73c9"
-stroke-width="3"
-/>
-
-<!-- TIME -->
-
-<text
-id="time"
-class="info"
-x="395"
-y="410"
-font-size="12"
-text-anchor="middle"
-fill="#fff"
->
-0:00 / 0:00
-</text>
+<text id="time" class="info" x="420" y="425" text-anchor="middle" font-size="12" fill="#fff">0:00 / 0:00</text>
 
 </svg>
-
 </div>
 
 <audio id="audio"></audio>
 
 <script>
 
-/* AUDIO */
+const player = document.getElementById('player');
+const audio = document.getElementById('audio');
 
-const audio = document.getElementById("audio");
+const playBtn = document.getElementById('playBtn');
+const stopBtn = document.getElementById('stopBtn');
+const ffBtn = document.getElementById('ffBtn');
+const rewBtn = document.getElementById('rewBtn');
+const loadBtn = document.getElementById('loadBtn');
 
-const playBtn = document.getElementById("playBtn");
-const stopBtn = document.getElementById("stopBtn");
-const ffBtn = document.getElementById("ffBtn");
-const rewBtn = document.getElementById("rewBtn");
-const loadBtn = document.getElementById("loadBtn");
+const progress = document.getElementById('progress');
+const knob = document.getElementById('knob');
 
-const progress = document.getElementById("progress");
-const knob = document.getElementById("knob");
-
-const title = document.getElementById("title");
-const artist = document.getElementById("artist");
-const time = document.getElementById("time");
+const title = document.getElementById('songTitle');
+const artist = document.getElementById('songArtist');
+const time = document.getElementById('time');
+const playText = document.getElementById('playText');
 
 let playing = false;
 
-/* LOAD SONG */
+/* LOAD */
 
-loadBtn.addEventListener("click",()=>{
+loadBtn.addEventListener('click',()=>{
 
-  const input = document.createElement("input");
+  const input = document.createElement('input');
 
-  input.type = "file";
-  input.accept = "audio/*";
+  input.type='file';
+  input.accept='audio/*';
 
-  input.onchange = e=>{
+  input.onchange=e=>{
 
-    const file = e.target.files[0];
-
+    const file=e.target.files[0];
     if(!file) return;
 
-    audio.src = URL.createObjectURL(file);
+    audio.src=URL.createObjectURL(file);
 
-    const clean = file.name.replace(/\.[^/.]+$/,"");
+    const clean=file.name.replace(/\.[^/.]+$/,'');
+    const split=clean.split('-');
 
-    const split = clean.split("-");
-
-    if(split.length > 1){
-
-      artist.textContent = split[0].trim().toUpperCase();
-      title.textContent = split[1].trim().toUpperCase();
-
+    if(split.length>1){
+      artist.textContent=split[0].trim().toUpperCase();
+      title.textContent=split[1].trim().toUpperCase();
     }else{
-
-      title.textContent = clean.toUpperCase();
-      artist.textContent = "UNKNOWN ARTIST";
-
+      title.textContent=clean.toUpperCase();
+      artist.textContent='UNKNOWN ARTIST';
     }
 
     audio.play();
-    playing = true;
+    playing=true;
+    playText.textContent='❚❚';
 
-  };
+  }
 
   input.click();
 
@@ -570,114 +315,102 @@ loadBtn.addEventListener("click",()=>{
 
 /* PLAY */
 
-playBtn.addEventListener("click",()=>{
+playBtn.addEventListener('click',()=>{
 
   if(!audio.src) return;
 
   if(playing){
-
     audio.pause();
-    playing = false;
-
+    playing=false;
+    playText.textContent='▶';
   }else{
-
     audio.play();
-    playing = true;
-
+    playing=true;
+    playText.textContent='❚❚';
   }
 
 });
 
 /* STOP */
 
-stopBtn.addEventListener("click",()=>{
+stopBtn.addEventListener('click',()=>{
 
   audio.pause();
-  audio.currentTime = 0;
-
-  playing = false;
+  audio.currentTime=0;
+  playing=false;
+  playText.textContent='▶';
 
 });
 
 /* SEEK */
 
-ffBtn.addEventListener("click",()=>{
-
+ffBtn.addEventListener('click',()=>{
   audio.currentTime += 5;
-
 });
 
-rewBtn.addEventListener("click",()=>{
-
+rewBtn.addEventListener('click',()=>{
   audio.currentTime -= 5;
-
 });
 
 /* UPDATE */
 
-audio.addEventListener("timeupdate",()=>{
+audio.addEventListener('timeupdate',()=>{
 
-  const current = audio.currentTime;
-  const duration = audio.duration || 0;
+  const current=audio.currentTime;
+  const duration=audio.duration || 0;
 
-  const percent = current / duration;
+  const percent=current/duration;
 
-  progress.setAttribute("width",percent * 220);
+  progress.setAttribute('width', percent*240);
+  knob.setAttribute('cx', 300 + percent*240);
 
-  knob.setAttribute("cx",285 + percent * 220);
-
-  time.textContent =
-  format(current) + " / " + format(duration);
+  time.textContent=format(current)+' / '+format(duration);
 
 });
 
 function format(t){
 
-  if(!t || isNaN(t)) return "0:00";
+  if(!t || isNaN(t)) return '0:00';
 
-  const m = Math.floor(t/60);
-  const s = Math.floor(t%60);
+  const m=Math.floor(t/60);
+  const s=Math.floor(t%60);
 
-  return m + ":" + String(s).padStart(2,"0");
+  return m+':'+String(s).padStart(2,'0');
 
 }
 
 /* DRAG */
 
-const player = document.getElementById("player");
+let drag=false;
+let offsetX=0;
+let offsetY=0;
 
-let drag = false;
+player.addEventListener('mousedown',e=>{
 
-let offsetX = 0;
-let offsetY = 0;
+  if(e.target.closest('.button')) return;
 
-player.addEventListener("mousedown",(e)=>{
+  drag=true;
 
-  if(e.target.closest(".button")) return;
-
-  drag = true;
-
-  offsetX = e.clientX - player.offsetLeft;
-  offsetY = e.clientY - player.offsetTop;
+  offsetX=e.clientX-player.offsetLeft;
+  offsetY=e.clientY-player.offsetTop;
 
 });
 
-document.addEventListener("mousemove",(e)=>{
+window.addEventListener('mousemove',e=>{
 
   if(!drag) return;
 
-  player.style.left = (e.clientX - offsetX) + "px";
-  player.style.top = (e.clientY - offsetY) + "px";
+  player.style.left=(e.clientX-offsetX)+'px';
+  player.style.top=(e.clientY-offsetY)+'px';
 
 });
 
-document.addEventListener("mouseup",()=>{
-
-  drag = false;
-
+window.addEventListener('mouseup',()=>{
+  drag=false;
 });
 
 </script>
 
 </body>
 </html>
+```
