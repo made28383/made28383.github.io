@@ -1,519 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Organic Pink MP3 Player (Draggable Widget)</title>
-<style>
-  :root{
-    --pink-1:#ff6fa3;
-    --pink-2:#ff86b2;
-    --pink-3:#ff4a8a;
-    --pink-deep:#e23676;
-    --gold-1:#f0c15b;
-    --gold-2:#d9a73e;
-    --gold-3:#b78117;
-    --text-dark:#3a2a33;
-    --text-mid:#6d5b64;
-    --glass:#ffffff22;
-    --ring:#ffd27e;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive MP3 Player Widget</title>
+    <style>
+        :root {
+            --bg-pink: #d15298;
+            --bg-pink-dark: #802353;
+            --bg-pink-light: #f78bc4;
+            --btn-gold: #c9bc5b;
+            --btn-gold-light: #fffaad;
+            --btn-gold-dark: #82782e;
+            --track-pink: #e64595;
+        }
 
-  html,body{
-    margin:0;
-    height:100%;
-    background:
-      radial-gradient(1200px 800px at 80% -10%, #ffd4ea 0%, #ffe8f2 40%, #fff 70%) fixed,
-      linear-gradient(180deg, #fff, #fff);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
-    color:#1d1b1d;
-  }
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: #2c2c2c;
+            font-family: sans-serif;
+            overflow: hidden;
+        }
 
-  /* Container that floats and is draggable */
-  .widget-wrap{
-    position: fixed;
-    left: 24px;
-    bottom: 24px;
-    width: 380px;
-    height: 240px;
-    z-index: 9999;
-    cursor: grab;
-    user-select: none;
-    touch-action: none;
-    filter: drop-shadow(0 16px 28px rgba(230, 51, 120, 0.25))
-            drop-shadow(0 6px 10px rgba(0,0,0,0.18));
-  }
-  .widget-wrap.dragging{
-    cursor: grabbing;
-    filter: drop-shadow(0 22px 40px rgba(230, 51, 120, 0.3))
-            drop-shadow(0 10px 16px rgba(0,0,0,0.25));
-  }
+        /* Widget Container */
+        #mp3-widget {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            width: 640px;
+            height: 440px;
+            cursor: move;
+            user-select: none;
+            filter: drop-shadow(5px 10px 15px rgba(0,0,0,0.5));
+            z-index: 9999;
+        }
 
-  /* Visually hidden, but accessible label text offscreen helper */
-  .sr-only{
-    position:absolute!important; width:1px!important; height:1px!important;
-    padding:0!important; margin:-1px!important; overflow:hidden!important;
-    clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important;
-  }
+        /* SVG Layout Styling */
+        .player-body {
+            fill: var(--bg-pink);
+            stroke: var(--bg-pink-dark);
+            stroke-width: 8;
+            filter: url(#inner-shadow);
+        }
 
-  /* Button resets inside SVG via pointer-events to JS */
-  .btn{ cursor: pointer; }
-  .btn:focus { outline: none; }
+        .player-rim {
+            fill: none;
+            stroke: var(--bg-pink-light);
+            stroke-width: 3;
+            opacity: 0.4;
+        }
 
-  /* Helper highlight animation on press */
-  .pressable:active{ opacity: 0.9; }
+        /* Window Display Area */
+        .display-window {
+            fill: transparent;
+            pointer-events: none;
+        }
 
-  /* Mini tooltip style (for debugging/UX hints, toggled via data-attr) */
-  .hint{
-    position: absolute;
-    left: 0; top: -28px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #3a2a33;
-    background: #ffffffd8;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-    transform: translateX(-50%);
-    pointer-events: none;
-    opacity: 0; transition: opacity .2s ease;
-  }
-  .widget-wrap[data-hint="drag"] .hint{ opacity: 1; }
-</style>
+        .display-frame {
+            fill: none;
+            stroke: var(--track-pink);
+            stroke-width: 14;
+            filter: url(#bevel-filter);
+        }
+
+        /* Frame Segment Marks */
+        .frame-mark {
+            fill: #4a4a4a;
+            stroke: #222;
+            stroke-width: 1;
+            filter: drop-shadow(1px 1px 1px rgba(255,255,255,0.3));
+        }
+
+        .frame-divider {
+            stroke: #4d0f2f;
+            stroke-width: 2;
+        }
+
+        /* Buttons Styling */
+        .mp3-btn {
+            fill: var(--btn-gold);
+            stroke: var(--btn-gold-dark);
+            stroke-width: 2;
+            cursor: pointer;
+            filter: url(#button-bevel);
+            transition: transform 0.05s ease, filter 0.05s ease;
+        }
+
+        .mp3-btn:hover {
+            fill: #ded26d;
+        }
+
+        .mp3-btn:active {
+            filter: url(#button-bevel-pressed);
+            transform: translate(1px, 1px);
+        }
+
+        .btn-icon {
+            fill: #4d4616;
+            pointer-events: none;
+        }
+
+        /* Sun Animation styles */
+        .sun-ray {
+            transform-origin: 470px 180px;
+            animation: ray-pulse 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes ray-pulse {
+            0% { opacity: 0.4; transform: scale(0.98); }
+            100% { opacity: 0.8; transform: scale(1.02); }
+        }
+    </style>
 </head>
 <body>
 
-<div class="widget-wrap" id="mp3Widget" aria-label="Floating MP3 Player" role="group">
-  <div class="hint" aria-hidden="true">Drag me</div>
+    <div id="mp3-widget">
+        <svg viewBox="0 0 640 440" width="100%" height="100%" xmlns="http://w3.org">
+            <defs>
+                <!-- Outer Bevel / Inner Shadow for Body -->
+                <filter id="inner-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur"/>
+                    <feOffset dx="3" dy="5"/>
+                    <feComponentTransfer>
+                        <feFuncA type="linear" slope="0.6"/>
+                    </feComponentTransfer>
+                    <feComposite operator="id" in2="SourceAlpha"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.7 0"/>
+                    <feBlend mode="multiply" in2="SourceGraphic"/>
+                </filter>
 
-  <!-- Single inline SVG: player body, display, controls, cloud accent -->
-  <svg id="playerSVG" width="100%" height="100%" viewBox="0 0 380 240" xmlns="[w3.org](http://www.w3.org/2000/svg)"
-       aria-labelledby="title desc" role="img">
-    <title id="title">Organic Pink MP3 Player</title>
-    <desc id="desc">Draggable floating MP3 player widget with sun display and gold controls.</desc>
+                <!-- Button Bevel Filter -->
+                <filter id="button-bevel" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur"/>
+                    <feComponentTransfer in="blur" result="glow">
+                        <feFuncA type="linear" slope="0.7"/>
+                    </feComponentTransfer>
+                    <feSpecularLighting in="blur" surfaceScale="5" specularConstant="1" specularExponent="15" lighting-color="#fff" result="spec">
+                        <feDistantLight azimuth="225" elevation="45"/>
+                    </feSpecularLighting>
+                    <feComposite in="spec" in2="SourceAlpha" operator="in" result="specOut"/>
+                    <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k2="1" k3="1" result="lit"/>
+                    <feOffset dx="-2" dy="-2" in="SourceAlpha" result="shadowOffset"/>
+                    <feGaussianBlur stdDeviation="2" in="shadowOffset" result="shadowBlur"/>
+                    <feBlend mode="multiply" in="shadowBlur" in2="lit"/>
+                </filter>
 
-    <defs>
-      <!-- Soft background glow -->
-      <filter id="outerGlow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur in="SourceAlpha" stdDeviation="10" result="blur"/>
-        <feOffset dx="0" dy="4" result="off"/>
-        <feMerge>
-          <feMergeNode in="off"/>
-          <feMergeNode in="blur"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
-      </filter>
+                <!-- Button Pressed Filter -->
+                <filter id="button-bevel-pressed" x="-20%" y="-20%" width="140%" height="140%">
+                    <feOffset dx="1" dy="1"/>
+                    <feGaussianBlur stdDeviation="1" result="blur"/>
+                    <feComposite in="SourceAlpha" in2="blur" operator="id"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0"/>
+                    <feBlend mode="multiply" in2="SourceGraphic"/>
+                </filter>
 
-      <!-- Inner bevel for shell -->
-      <filter id="innerBevel" x="-10%" y="-10%" width="120%" height="120%">
-        <feOffset dx="0" dy="1"/>
-        <feGaussianBlur stdDeviation="1.2" result="b"/>
-        <feComposite in="SourceGraphic" in2="b" operator="arithmetic" k2="1" k3="1" result="bevel"/>
-        <feSpecularLighting in="b" surfaceScale="2" specularConstant="0.7" specularExponent="18" lighting-color="#fff">
-          <fePointLight x="-100" y="-120" z="140"/>
-        </feSpecularLighting>
-        <feComposite in2="SourceAlpha" operator="in" />
-        <feMerge>
-          <feMergeNode in="bevel"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
-      </filter>
+                <!-- Display Rim Bevel -->
+                <filter id="bevel-filter" x="-10%" y="-10%" width="120%" height="120%">
+                    <feSpecularLighting surfaceScale="3" specularConstant="0.8" specularExponent="10" lighting-color="#fff" result="spec">
+                        <feDistantLight azimuth="225" elevation="60"/>
+                    </feSpecularLighting>
+                    <feComposite in="spec" in2="SourceAlpha" operator="in" result="specOut"/>
+                    <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k2="1" k3="0.5"/>
+                </filter>
 
-      <!-- Gloss highlight blur -->
-      <filter id="glossBlur" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="4"/>
-      </filter>
+                <!-- Screen Mask to keep clouds/sun strictly inside window -->
+                <clipPath id="screen-clip">
+                    <path d="M 270,160 C 250,70 470,30 550,110 C 620,180 590,300 510,250 C 420,200 290,250 270,160 Z"/>
+                </clipPath>
+            </defs>
 
-      <!-- Pink shell gradient -->
-      <radialGradient id="pinkRad" cx="30%" cy="20%" r="80%">
-        <stop offset="0%" stop-color="#ff9ec3"/>
-        <stop offset="40%" stop-color="#ff6fa3"/>
-        <stop offset="78%" stop-color="#ff4a8a"/>
-        <stop offset="100%" stop-color="#e23676"/>
-      </radialGradient>
+            <!-- Main MP3 Player Body -->
+            <path class="player-body" d="M 50,220 C 30,140 180,150 220,130 C 260,110 270,30 420,10 C 580,-10 650,130 620,240 C 580,380 400,340 300,390 C 200,440 40,400 20,320 C 5,260 70,300 50,220 Z" />
+            <!-- Highlight Inner Rim Line -->
+            <path class="player-rim" d="M 55,220 C 35,145 180,155 218,135 C 258,115 268,35 418,15 C 575,-5 642,132 612,238 C 575,372 398,335 298,385 C 198,432 45,392 25,318 C 10,258 75,295 55,220 Z" />
 
-      <!-- Display glass gradient -->
-      <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.06"/>
-      </linearGradient>
+            <!-- TRANSPARENT DISPLAY AREA WITH CLOUDS AND SUN -->
+            <g clip-path="url(#screen-clip)">
+                <!-- Sky/Space Background Layer (Completely Transparent as requested) -->
+                <rect x="200" y="0" width="420" height="350" fill="none" />
 
-      <!-- Gold button gradient -->
-      <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#ffe29e"/>
-        <stop offset="45%" stop-color="#f0c15b"/>
-        <stop offset="100%" stop-color="#b78117"/>
-      </linearGradient>
+                <!-- Realistic Rendered Sun -->
+                <g id="ui-sun">
+                    <!-- Outer Sun Glow Aura -->
+                    <circle cx="470" cy="180" r="75" fill="url(#sun-aura)" opacity="0.3" />
+                    <!-- Sun Rays -->
+                    <path class="sun-ray" d="M 470,90 L 470,270 M 380,180 L 560,180 M 406,116 L 534,244 M 406,244 L 534,116" stroke="#ffffa0" stroke-width="4" stroke-dasharray="10,15" opacity="0.6" />
+                    <!-- Core Soft Gradient Sun -->
+                    <circle cx="470" cy="180" r="45" fill="url(#sun-gradient)" />
+                    <!-- Sun Highlights -->
+                    <circle cx="460" cy="170" r="40" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.5"/>
+                </g>
 
-      <!-- Button shine -->
-      <radialGradient id="btnShine" cx="30%" cy="25%" r="70%">
-        <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
-        <stop offset="35%" stop-color="#fff" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-      </radialGradient>
+                <!-- Realistic Layered Clouds (Bottom and Top overlays) -->
+                <g id="ui-clouds" style="pointer-events: none;">
+                    <!-- Back Deep Cloud Shadow Layer -->
+                    <path d="M 230,220 Q 270,160 330,180 Q 380,150 440,190 Q 500,160 560,210 Q 610,250 560,280 L 250,280 Z" fill="#e0aec9" opacity="0.5" filter="blur(6px)"/>
+                    
+                    <!-- Main Cloud Form -->
+                    <path d="M 240,230 C 260,180 320,180 340,200 C 370,170 430,170 460,200 C 490,175 540,185 560,220 C 590,250 550,290 500,280 C 420,295 320,290 260,270 C 230,255 220,240 240,230 Z" fill="url(#cloud-grad-main)" filter="blur(1px)"/>
+                    
+                    <!-- Cloud Top Fluffy Highlights -->
+                    <path d="M 255,225 C 270,195 310,195 325,210 C 355,185 415,185 440,210 C 470,190 515,195 535,225" fill="none" stroke="url(#cloud-highlight)" stroke-width="6" filter="blur(2px)" opacity="0.9" />
+                </g>
 
-      <!-- Sun layers: core, corona, ring -->
-      <radialGradient id="sunCore" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#fff7b3"/>
-        <stop offset="50%" stop-color="#ffd66e"/>
-        <stop offset="100%" stop-color="#ff9a2f"/>
-      </radialGradient>
-      <radialGradient id="sunCorona" cx="50%" cy="50%" r="75%">
-        <stop offset="0%" stop-color="#ffe7a8" stop-opacity="0.65"/>
-        <stop offset="60%" stop-color="#ffd27e" stop-opacity="0.18"/>
-        <stop offset="100%" stop-color="#ffd27e" stop-opacity="0"/>
-      </radialGradient>
-
-      <!-- Transparent space “around” sun: achieved by no fill background in display group.
-           We add a faint lens glare overlay -->
-      <radialGradient id="glare" cx="30%" cy="25%" r="60%">
-        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-      </radialGradient>
-
-      <!-- Cloud gradient (only cloud accent used) -->
-      <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
-        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.72"/>
-      </linearGradient>
-
-      <!-- Subtle noise texture for shell -->
-      <filter id="noise">
-        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch" result="n"/>
-        <feColorMatrix in="n" type="saturate" values="0"/>
-        <feComponentTransfer>
-          <feFuncA type="table" tableValues="0 0.08"/>
-        </feComponentTransfer>
-        <feBlend in2="SourceGraphic" mode="multiply"/>
-      </filter>
-    </defs>
-
-    <!-- Organic shell -->
-    <g id="shell" filter="url(#outerGlow)">
-      <!-- Blobby rounded path to feel organic -->
-      <path id="shellPath"
-            d="M40,52
-               C30,78, 30,108, 44,132
-               C56,154, 76,168, 104,176
-               C148,188, 206,188, 260,174
-               C300,164, 324,144, 338,118
-               C354,86, 350,64, 330,48
-               C312,34, 288,30, 254,30
-               C206,30, 160,38, 118,42
-               C80,46, 54,46, 40,52 Z"
-            fill="url(#pinkRad)"/>
-      <!-- Inner contour shadow for depth -->
-      <path d="M46,58
-               C38,80, 38,106, 50,128
-               C62,150, 82,164, 108,172
-               C150,184, 206,184, 258,170
-               C296,160, 318,142, 332,116
-               C346,90, 342,68, 324,54
-               C308,42, 286,38, 252,38
-               C206,38, 162,46, 120,50
-               C84,54, 58,54, 46,58 Z"
-            fill="rgba(0,0,0,0.10)"/>
-      <!-- Subtle gloss swipe -->
-      <path d="M60,70
-               C110,40, 200,34, 280,52
-               C220,58, 160,70, 106,88
-               C86,94, 72,90, 60,70 Z"
-            fill="#ffffff" opacity="0.35" filter="url(#glossBlur)"/>
-      <!-- Fine grain -->
-      <use href="#shellPath" fill="transparent" filter="url(#noise)" opacity="0.25"/>
-    </g>
-
-    <!-- Display window: transparent space around the sun -->
-    <g id="display" transform="translate(86,72)">
-      <!-- Cutout bezel shape (rounded-blob rectangle) -->
-      <path d="M8,4
-               C22,0, 74,0, 96,4
-               C118,8, 136,20, 140,32
-               C144,44, 144,66, 140,78
-               C136,90, 118,100, 96,104
-               C74,108, 22,108, 8,104
-               C-4,100, -6,90, -6,56
-               C-6,22, -4,8, 8,4 Z"
-            fill="#1d1b1d" opacity="0.08"/>
-      <!-- “Glass” ring -->
-      <path d="M0,10
-               C16,2, 78,2, 102,6
-               C126,10, 146,24, 150,40
-               C154,56, 154,72, 150,88
-               C146,104, 128,116, 104,120
-               C80,124, 16,124, 0,116
-               C-10,112, -12,96, -12,64
-               C-12,32, -10,18, 0,10 Z"
-            fill="url(#glass)" opacity="0.8"/>
-
-      <!-- Transparent “space” group: the sun floats; no opaque background -->
-      <!-- SUN: core -->
-      <circle id="sunCoreCircle" cx="72" cy="64" r="28" fill="url(#sunCore)"/>
-      <!-- CORONA glow -->
-      <circle cx="72" cy="64" r="46" fill="url(#sunCorona)"/>
-      <!-- Ring around sun -->
-      <circle cx="72" cy="64" r="35" fill="none" stroke="rgba(255,210,126,0.65)" stroke-width="2.2"/>
-      <!-- Lens glare -->
-      <ellipse cx="56" cy="44" rx="28" ry="14" fill="url(#glare)" opacity="0.55"/>
-
-      <!-- Track info (kept readable) -->
-      <g font-family="inherit">
-        <text x="8" y="18" font-size="13" fill="#6d5b64" font-weight="600">PinkPantheress &amp; Zara Larsson</text>
-        <text x="8" y="36" font-size="16" fill="#3a2a33" font-weight="700">Stateside</text>
-        <text x="8" y="100" font-size="12" fill="#6d5b64">0:00 — 0:00</text>
-      </g>
-    </g>
-
-    <!-- Controls row -->
-    <g id="controls" transform="translate(64,168)">
-      <!-- Previous -->
-      <g id="btnPrev" class="btn pressable" tabindex="0" role="button" aria-label="Previous" transform="translate(0,0)">
-        <circle cx="0" cy="0" r="18" fill="url(#gold)"/>
-        <circle cx="0" cy="0" r="18" fill="url(#btnShine)" opacity="0.55" />
-        <path d="M6,-9 L-6,0 L6,9 Z" fill="#6b4b16"/>
-        <rect x="8" y="-9" width="3" height="18" rx="1.5" fill="#6b4b16"/>
-      </g>
-
-      <!-- Play/Pause -->
-      <g id="btnPlay" class="btn pressable" tabindex="0" role="button" aria-pressed="false" aria-label="Play/Pause" transform="translate(62,0)">
-        <circle cx="0" cy="0" r="22" fill="url(#gold)"/>
-        <circle cx="0" cy="0" r="22" fill="url(#btnShine)" opacity="0.6" />
-        <!-- Play icon (shown by default) -->
-        <path id="iconPlay" d="M-5,-10 L11,0 L-5,10 Z" fill="#6b4b16"/>
-        <!-- Pause icon (hidden initially) -->
-        <g id="iconPause" opacity="0">
-          <rect x="-7" y="-9" width="5" height="18" rx="2" fill="#6b4b16"/>
-          <rect x="3" y="-9" width="5" height="18" rx="2" fill="#6b4b16"/>
-        </g>
-      </g>
-
-      <!-- Next -->
-      <g id="btnNext" class="btn pressable" tabindex="0" role="button" aria-label="Next" transform="translate(126,0)">
-        <circle cx="0" cy="0" r="18" fill="url(#gold)"/>
-        <circle cx="0" cy="0" r="18" fill="url(#btnShine)" opacity="0.55" />
-        <path d="M-6,-9 L6,0 L-6,9 Z" fill="#6b4b16"/>
-        <rect x="-11" y="-9" width="3" height="18" rx="1.5" fill="#6b4b16"/>
-      </g>
-
-      <!-- Volume knob -->
-      <g id="volKnob" class="btn pressable" tabindex="0" role="slider" aria-label="Volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" transform="translate(212,0)">
-        <defs>
-          <radialGradient id="knobGrad" cx="30%" cy="30%" r="70%">
-            <stop offset="0%" stop-color="#ffe6b3"/>
-            <stop offset="60%" stop-color="#f0c15b"/>
-            <stop offset="100%" stop-color="#b78117"/>
-          </radialGradient>
-        </defs>
-        <circle cx="0" cy="0" r="20" fill="url(#knobGrad)"/>
-        <circle cx="0" cy="0" r="20" fill="url(#btnShine)" opacity="0.5"/>
-        <!-- Tick track -->
-        <circle cx="0" cy="0" r="16" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="2" stroke-dasharray="4 6" stroke-linecap="round" />
-        <!-- Indicator (rotates) -->
-        <rect id="volIndicator" x="-1.5" y="-12" width="3" height="10" rx="1.5" fill="#6b4b16" transform="rotate(40)"/>
-        <text x="30" y="6" font-size="12" fill="#6d5b64" font-weight="600">VOL.</text>
-      </g>
-    </g>
-
-    <!-- Cloud accent (only the cloud part, soft, realistic-ish) -->
-    <g id="cloudAccent" transform="translate(288,32)" opacity="0.9">
-      <!-- Soft blur backdrop for depth -->
-      <g filter="url(#glossBlur)" opacity="0.5">
-        <path d="M-22,36
-                 C-28,26,-24,14,-14,10
-                 C-8,0,10,-6,24,2
-                 C36,-2,52,6,56,18
-                 C66,18,76,26,74,36
-                 C86,42,84,60,70,62
-                 C64,70,42,74,26,66
-                 C12,74,-2,70,-10,60
-                 C-22,56,-26,46,-22,36 Z"
-              fill="#ffffff" />
-      </g>
-      <!-- Main cloud body -->
-      <path d="M-22,36
-               C-28,26,-24,14,-14,10
-               C-8,0,10,-6,24,2
-               C36,-2,52,6,56,18
-               C66,18,76,26,74,36
-               C86,42,84,60,70,62
-               C64,70,42,74,26,66
-               C12,74,-2,70,-10,60
-               C-22,56,-26,46,-22,36 Z"
-            fill="url(#cloudFill)" stroke="#ffffffcc" stroke-width="1.5"/>
-      <!-- Cloud highlights -->
-      <ellipse cx="20" cy="6" rx="18" ry="8" fill="#fff" opacity="0.55"/>
-      <ellipse cx="48" cy="20" rx="10" ry="6" fill="#fff" opacity="0.5"/>
-    </g>
-
-  </svg>
-</div>
-
-<script>
-(function(){
-  // Draggable widget
-  const wrap = document.getElementById('mp3Widget');
-  let dragging = false, startX=0, startY=0, startLeft=0, startTop=0;
-
-  function pointerDown(e){
-    const p = getPoint(e);
-    dragging = true;
-    wrap.classList.add('dragging');
-    wrap.setAttribute('data-hint','');
-    startX = p.x; startY = p.y;
-    const rect = wrap.getBoundingClientRect();
-    startLeft = rect.left; startTop = rect.top;
-    e.preventDefault();
-  }
-  function pointerMove(e){
-    if(!dragging) return;
-    const p = getPoint(e);
-    const dx = p.x - startX;
-    const dy = p.y - startY;
-    let nx = startLeft + dx;
-    let ny = startTop + dy;
-
-    // Keep some tolerance; don't hard clamp unless way outside
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const r = wrap.getBoundingClientRect();
-    const w = r.width, h = r.height;
-    const pad = 12;
-    nx = Math.min(Math.max(nx, -w*0.6), vw - pad*0.5);
-    ny = Math.min(Math.max(ny, -h*0.6), vh - pad*0.5);
-
-    wrap.style.left = nx + 'px';
-    wrap.style.top  = ny + 'px';
-  }
-  function pointerUp(){
-    if(!dragging) return;
-    dragging = false;
-    wrap.classList.remove('dragging');
-  }
-  function getPoint(e){
-    if(e.touches && e.touches[0]) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
-    return {x:e.clientX, y:e.clientY};
-  }
-
-  wrap.addEventListener('mousedown', pointerDown);
-  wrap.addEventListener('touchstart', pointerDown, {passive:false});
-  window.addEventListener('mousemove', pointerMove);
-  window.addEventListener('touchmove', pointerMove, {passive:false});
-  window.addEventListener('mouseup', pointerUp);
-  window.addEventListener('touchend', pointerUp);
-
-  // Controls logic (UI only; no audio wired yet)
-  const svg = document.getElementById('playerSVG');
-  const btnPrev = svg.getElementById ? svg.getElementById('btnPrev') : document.querySelector('#btnPrev');
-  const btnPlay = svg.getElementById ? svg.getElementById('btnPlay') : document.querySelector('#btnPlay');
-  const btnNext = svg.getElementById ? svg.getElementById('btnNext') : document.querySelector('#btnNext');
-  const volKnob = svg.getElementById ? svg.getElementById('volKnob') : document.querySelector('#volKnob');
-
-  const iconPlay = document.getElementById('iconPlay');
-  const iconPause = document.getElementById('iconPause');
-
-  let isPlaying = false;
-
-  function togglePlay(){
-    isPlaying = !isPlaying;
-    iconPlay.setAttribute('opacity', isPlaying ? '0' : '1');
-    iconPause.setAttribute('opacity', isPlaying ? '1' : '0');
-    btnPlay.setAttribute('aria-pressed', String(isPlaying));
-    pulseSun(isPlaying);
-  }
-
-  // Simple sun pulse animation to simulate "alive" playback
-  const sun = document.getElementById('sunCoreCircle');
-  let sunPulseRAF = null, sunPhase = 0;
-  function pulseSun(active){
-    if(!sun) return;
-    if(!active){
-      if(sunPulseRAF) cancelAnimationFrame(sunPulseRAF);
-      sunPulseRAF = null;
-      sun.setAttribute('r','28');
-      return;
-    }
-    const loop = ()=>{
-      sunPhase += 0.08;
-      const r = 28 + Math.sin(sunPhase) * 1.2; // subtle
-      sun.setAttribute('r', String(r.toFixed(2)));
-      sunPulseRAF = requestAnimationFrame(loop);
-    };
-    if(!sunPulseRAF) sunPulseRAF = requestAnimationFrame(loop);
-  }
-
-  // Bind buttons
-  btnPlay.addEventListener('click', (e)=>{ e.stopPropagation(); togglePlay(); });
-  btnPrev.addEventListener('click', (e)=>{ e.stopPropagation(); flash(btnPrev); });
-  btnNext.addEventListener('click', (e)=>{ e.stopPropagation(); flash(btnNext); });
-
-  // Keyboard accessibility for buttons
-  [btnPrev, btnPlay, btnNext].forEach(el=>{
-    el.addEventListener('keydown', (ev)=>{
-      if(ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); el.dispatchEvent(new MouseEvent('click')); }
-    });
-  });
-
-  // Visual flash feedback
-  function flash(node){
-    node.animate([
-      { transform:'translateY(0px)', filter:'brightness(1)' },
-      { transform:'translateY(1px)', filter:'brightness(0.9)' },
-      { transform:'translateY(0px)', filter:'brightness(1)' }
-    ], { duration:180, easing:'ease-out' });
-  }
-
-  // Volume knob rotation with drag
-  const volIndicator = document.getElementById('volIndicator');
-  let volDragging=false, volAngle=40; // start angle
-  const minA = -110, maxA = 110;
-
-  function setVolFromAngle(a){
-    volAngle = Math.max(minA, Math.min(maxA, a));
-    volIndicator.setAttribute('transform', `rotate(${volAngle})`);
-    const pct = Math.round(((volAngle - minA) / (maxA - minA)) * 100);
-    volKnob.setAttribute('aria-valuenow', String(pct));
-  }
-
-  function knobDown(e){
-    e.stopPropagation();
-    volDragging = true;
-    document.body.style.cursor = 'grabbing';
-  }
-  function knobMove(e){
-    if(!volDragging) return;
-    const p = getPoint(e);
-    const bbox = volKnob.getBoundingClientRect();
-    const cx = bbox.left + bbox.width/2;
-    const cy = bbox.top + bbox.height/2;
-    const ang = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI; // -180..180, 0 at +x
-    const displayAng = ang + 90; // rotate so top is min/max center-ish
-    setVolFromAngle(displayAng);
-  }
-  function knobUp(){
-    if(!volDragging) return;
-    volDragging = false;
-    document.body.style.cursor = '';
-  }
-  volKnob.addEventListener('mousedown', knobDown);
-  volKnob.addEventListener('touchstart', knobDown, {passive:false});
-  window.addEventListener('mousemove', knobMove);
-  window.addEventListener('touchmove', knobMove, {passive:false});
-  window.addEventListener('mouseup', knobUp);
-  window.addEventListener('touchend', knobUp);
-
-  // Show hint on first load for a moment
-  wrap.setAttribute('data-hint','drag');
-  setTimeout(()=>wrap.removeAttribute('data-hint'), 1800);
-
-  // Keep inside viewport on resize
-  window.addEventListener('resize', ()=>{
-    const rect = wrap.getBoundingClientRect();
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const nx = Math.min(rect.left, vw - 40);
-    const ny = Math.min(rect.top,  vh - 40);
-    wrap.style.left = Math.max(nx, -rect.width*0.6) + 'px';
-    wrap.style.top  = Math.max(ny, -rect.height*0.6) + 'px';
-  });
-
-})();
-</script>
-</body>
-</html>
+                <!-- Gradients Definition for Screen Objects -->
+                <defs>
+                    <radialGradient id="sun-gradient" cx="35%" cy="35%" r="65%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="25%" stop-color="#fff373"/>
+                        <stop offset="70%" stop-color="#ff9a00"/>
+                        <stop offset="100%" stop-color="#ff5100"/>
+                    </radialGradient>
+                    <radialGradient id="sun-aura" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#ffdf6d" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="#ff9a00" stop-opacity="0"/>
+                    </radialGradient>
+                    <linearGradient id="cloud-grad-main" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="40%" stop-color="#fcedf5"/>
+                        <stop offset="80%" stop-color="#dba2c1"/>
