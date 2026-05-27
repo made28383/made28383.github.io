@@ -1,12 +1,10 @@
-# Y2K Cloud MP3 Player – Single HTML File
-
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Y2K MP3 Player</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud MP3 Player</title>
 
 <style>
 *{
@@ -19,52 +17,56 @@ body{
   width:100vw;
   height:100vh;
   overflow:hidden;
-
-  background:
-  radial-gradient(circle at 75% 15%, #fff6a3 0%, #ffe870 8%, transparent 14%),
-  linear-gradient(180deg,#8ce7ff 0%,#c8f7ff 45%,#ffd9f0 100%);
-
-  font-family:Arial,sans-serif;
+  background:transparent;
+  font-family:Arial, sans-serif;
 }
 
 #player{
-  position:absolute;
-  width:640px;
-  left:60px;
+  position:fixed;
+  width:480px;
+  left:40px;
   top:40px;
-  user-select:none;
   cursor:grab;
-
-  filter:
-  drop-shadow(0 22px 30px rgba(80,0,50,.45))
-  drop-shadow(0 0 18px rgba(255,120,220,.35));
+  user-select:none;
+  z-index:9999;
+  filter:drop-shadow(0 30px 35px rgba(0,0,0,0.35));
 }
 
-#player:active{
+#player.dragging{
   cursor:grabbing;
 }
 
 svg{
   width:100%;
+  height:auto;
   overflow:visible;
 }
 
-.button{
+.btn{
   cursor:pointer;
-  transition:transform .08s, filter .12s;
-  transform-origin:center;
+  transition:transform .12s ease, filter .12s ease;
 }
 
-.button:hover{
-  filter:brightness(1.08);
+.btn:hover{
+  filter:brightness(1.06);
 }
 
-.button:active{
-  transform:translateY(2px) scale(.94);
+.btn:active{
+  transform:translateY(2px) scale(0.97);
 }
 
-.info{
-  font-family:"Courier New",monospace;
+.screen-text{
+  font-family:'Courier New', monospace;
+  fill:white;
+  letter-spacing:1px;
+}
+
+#progressFill{
+  transition:width .15s linear;
+}
+
+#volumeFill{
+  transition:width .15s linear;
 }
 
 </style>
@@ -73,340 +75,517 @@ svg{
 
 <div id="player">
 
-<svg viewBox="0 0 700 460">
+<svg viewBox="0 0 900 650">
 
 <defs>
 
-<radialGradient id="bodyGrad" cx="30%" cy="22%" r="90%">
-  <stop offset="0%" stop-color="#ffb3e5"/>
-  <stop offset="35%" stop-color="#db69ae"/>
-  <stop offset="70%" stop-color="#bf5b9d"/>
-  <stop offset="100%" stop-color="#5b2247"/>
-</radialGradient>
-
-<linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-  <stop offset="0%" stop-color="#ff93d2"/>
-  <stop offset="50%" stop-color="#d83385"/>
-  <stop offset="100%" stop-color="#8f2456"/>
+<linearGradient id="pinkOuter" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0%" stop-color="#ff8ed8"/>
+  <stop offset="45%" stop-color="#ff5ebd"/>
+  <stop offset="100%" stop-color="#d92d8d"/>
 </linearGradient>
 
-<radialGradient id="buttonGrad" cx="35%" cy="20%" r="80%">
-  <stop offset="0%" stop-color="#fff8bc"/>
-  <stop offset="40%" stop-color="#ead85f"/>
-  <stop offset="100%" stop-color="#8d7d10"/>
+<linearGradient id="pinkInner" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="#ffc1ea"/>
+  <stop offset="100%" stop-color="#ff5dbd"/>
+</linearGradient>
+
+<linearGradient id="cloudBlue" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0%" stop-color="#dff4ff"/>
+  <stop offset="45%" stop-color="#b6dcff"/>
+  <stop offset="100%" stop-color="#8fc2f0"/>
+</linearGradient>
+
+<linearGradient id="cloudShadow" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="#75a8d9"/>
+  <stop offset="100%" stop-color="#4f7ba7"/>
+</linearGradient>
+
+<linearGradient id="cloudGloss" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="rgba(255,255,255,.95)"/>
+  <stop offset="45%" stop-color="rgba(255,255,255,.2)"/>
+  <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+</linearGradient>
+
+<radialGradient id="sunCore" cx="50%" cy="50%" r="60%">
+  <stop offset="0%" stop-color="#fff8be"/>
+  <stop offset="35%" stop-color="#ffd54d"/>
+  <stop offset="75%" stop-color="#ff9b00"/>
+  <stop offset="100%" stop-color="#ff7200"/>
 </radialGradient>
 
-<radialGradient id="metalGrad" cx="30%" cy="20%" r="80%">
-  <stop offset="0%" stop-color="#ffffff"/>
-  <stop offset="50%" stop-color="#b8b8b8"/>
-  <stop offset="100%" stop-color="#2a2a2a"/>
+<radialGradient id="sunGlow" cx="50%" cy="50%" r="70%">
+  <stop offset="0%" stop-color="rgba(255,220,100,.9)"/>
+  <stop offset="100%" stop-color="rgba(255,120,0,0)"/>
 </radialGradient>
+
+<linearGradient id="buttonPink" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0%" stop-color="#ffe0fa"/>
+  <stop offset="100%" stop-color="#ff9fe4"/>
+</linearGradient>
+
+<linearGradient id="buttonBlue" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0%" stop-color="#dff3ff"/>
+  <stop offset="100%" stop-color="#87c2f6"/>
+</linearGradient>
+
+<filter id="softShadow" x="-100%" y="-100%" width="300%" height="300%">
+  <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.25"/>
+</filter>
+
+<filter id="sunBlur" x="-100%" y="-100%" width="300%" height="300%">
+  <feGaussianBlur stdDeviation="14"/>
+</filter>
 
 </defs>
 
-<!-- MAIN BODY -->
+<!-- OUTER BODY -->
 <path
  d="
- M115 390
- Q45 388 18 340
- Q-6 292 10 205
-
- Q18 150 58 130
- Q98 112 120 78
-
- Q155 18 265 18
-
- Q390 18 500 88
- Q590 145 628 230
-
- Q655 290 628 350
- Q602 405 520 408
-
- Q430 406 350 392
- Q250 376 115 390
+ M120 100
+ C200 40 380 40 500 90
+ C620 10 820 120 800 280
+ C880 370 820 540 630 550
+ C500 620 220 620 110 520
+ C0 430 0 200 120 100
  "
- fill="url(#bodyGrad)"
+ fill="url(#pinkOuter)"
+ stroke="#ffb7e8"
+ stroke-width="12"
+ filter="url(#softShadow)"
 />
 
-<!-- DARK BOTTOM EDGE -->
+<!-- METAL DOTS -->
+<g fill="#d7dbe2" stroke="#8d93a1" stroke-width="4">
+  <ellipse cx="130" cy="135" rx="18" ry="10"/>
+  <ellipse cx="220" cy="95" rx="18" ry="10"/>
+  <ellipse cx="350" cy="75" rx="18" ry="10"/>
+  <ellipse cx="490" cy="75" rx="18" ry="10"/>
+  <ellipse cx="640" cy="95" rx="18" ry="10"/>
+  <ellipse cx="740" cy="150" rx="18" ry="10"/>
+  <ellipse cx="790" cy="260" rx="18" ry="10"/>
+  <ellipse cx="770" cy="420" rx="18" ry="10"/>
+  <ellipse cx="690" cy="520" rx="18" ry="10"/>
+  <ellipse cx="520" cy="570" rx="18" ry="10"/>
+  <ellipse cx="300" cy="570" rx="18" ry="10"/>
+  <ellipse cx="120" cy="510" rx="18" ry="10"/>
+  <ellipse cx="70" cy="360" rx="18" ry="10"/>
+  <ellipse cx="80" cy="220" rx="18" ry="10"/>
+</g>
+
+<!-- BLACK SCREEN -->
 <path
  d="
- M110 390
- Q55 388 28 345
- Q10 318 18 300
- Q65 360 180 360
- Q290 355 370 365
- Q470 378 520 374
- Q585 372 620 345
+ M420 70
+ C610 20 770 130 740 280
+ C720 370 610 410 450 390
+ C340 370 270 340 250 270
+ C210 150 300 100 420 70
  "
- fill="rgba(70,0,40,.65)"
+ fill="#000"
 />
 
-<!-- TOP GLOSS -->
+<!-- SUN GLOW -->
+<circle cx="585" cy="195" r="120" fill="url(#sunGlow)" opacity="0.8" filter="url(#sunBlur)"/>
+
+<!-- SUN -->
+<g id="sunGroup">
+
+<g id="sunRays" transform="translate(585 195)">
+
+<path d="M0 -110 C12 -95 15 -78 0 -62 C-15 -78 -12 -95 0 -110Z" fill="#ffbe00"/>
+<path d="M75 -80 C85 -65 85 -48 70 -40 C62 -55 63 -68 75 -80Z" fill="#ffbe00"/>
+<path d="M110 0 C95 12 78 15 62 0 C78 -15 95 -12 110 0Z" fill="#ffbe00"/>
+<path d="M75 80 C65 85 48 85 40 70 C55 62 68 63 75 80Z" fill="#ffbe00"/>
+<path d="M0 110 C-12 95 -15 78 0 62 C15 78 12 95 0 110Z" fill="#ffbe00"/>
+<path d="M-75 80 C-85 65 -85 48 -70 40 C-62 55 -63 68 -75 80Z" fill="#ffbe00"/>
+<path d="M-110 0 C-95 -12 -78 -15 -62 0 C-78 15 -95 12 -110 0Z" fill="#ffbe00"/>
+<path d="M-75 -80 C-65 -85 -48 -85 -40 -70 C-55 -62 -68 -63 -75 -80Z" fill="#ffbe00"/>
+
+</g>
+
+<circle
+ cx="585"
+ cy="195"
+ r="72"
+ fill="url(#sunCore)"
+ stroke="#ff9800"
+ stroke-width="8"
+/>
+
 <path
  d="
- M120 120
- Q200 42 325 58
- Q430 72 515 140
-
- Q410 98 285 102
- Q180 104 120 120
+ M585 145
+ C620 145 640 165 640 190
+ C640 225 610 245 580 245
+ C545 245 525 220 525 190
+ C525 155 555 130 595 130
  "
- fill="rgba(255,255,255,.22)"
+ fill="none"
+ stroke="#ff9200"
+ stroke-width="8"
+ stroke-linecap="round"
 />
 
-<!-- RING -->
+</g>
+
+<!-- CLOUD -->
+<g filter="url(#softShadow)">
+
 <path
  d="
- M285 52
- Q395 30 500 90
- Q590 140 602 240
-
- Q604 276 572 286
-
- Q510 300 410 292
- Q300 280 235 255
-
- Q205 242 198 208
- Q192 160 218 112
-
- Q235 80 285 52
+ M120 390
+ C160 290 290 280 360 330
+ C390 240 520 230 590 310
+ C680 250 790 330 790 430
+ C850 450 860 560 720 570
+ L190 570
+ C50 570 20 450 120 390
  "
- fill="url(#ringGrad)"
+ fill="url(#cloudBlue)"
+ stroke="#72a7d6"
+ stroke-width="8"
 />
 
-<!-- INNER SCREEN -->
 <path
  d="
- M312 72
- Q402 58 482 108
-
- Q552 150 560 225
-
- Q562 255 535 260
-
- Q470 270 405 262
- Q315 250 260 228
-
- Q235 216 230 190
- Q225 150 245 118
-
- Q262 92 312 72
+ M140 405
+ C180 330 290 330 350 360
+ C390 280 510 280 575 345
+ C665 295 755 355 760 430
+ C805 450 795 530 690 535
+ L210 535
+ C100 535 80 450 140 405
  "
- fill="#f4f4f4"
+ fill="url(#cloudGloss)"
+ opacity="0.7"
 />
 
-<!-- SCREW STUDS -->
+<path
+ d="
+ M180 520
+ C300 555 580 555 700 520
+ "
+ fill="none"
+ stroke="url(#cloudShadow)"
+ stroke-width="14"
+ stroke-linecap="round"
+ opacity="0.35"
+/>
+
+</g>
+
+<!-- SCREEN TEXT -->
+<text x="185" y="290" class="screen-text" font-size="38">
+LAUL - LAULJA
+</text>
+
+<text id="currentTime" x="120" y="360" class="screen-text" font-size="28">
+0:00
+</text>
+
+<text id="duration" x="650" y="360" class="screen-text" font-size="28">
+-2:11
+</text>
+
+<!-- PROGRESS BAR -->
+<rect x="190" y="345" width="420" height="8" rx="10" fill="#ff8b2d" opacity="0.3"/>
+
+<rect id="progressFill" x="190" y="345" width="150" height="8" rx="10" fill="#ff8b2d"/>
+
+<circle id="progressKnob" cx="340" cy="349" r="12" fill="#ffc53a" stroke="#ff7b00" stroke-width="4"/>
+
+<!-- LEFT BIG STAR BUTTON -->
+<g class="btn" id="starBtn">
+<circle cx="140" cy="430" r="58" fill="url(#buttonBlue)" stroke="#5ea0d8" stroke-width="6"/>
+<path d="M140 398 L148 420 L172 420 L152 434 L160 456 L140 442 L120 456 L128 434 L108 420 L132 420 Z" fill="#ffd539" stroke="#ffb000" stroke-width="4"/>
+</g>
+
+<!-- HEART BUTTON -->
+<g class="btn">
+<circle cx="450" cy="390" r="38" fill="url(#buttonBlue)" stroke="#5ea0d8" stroke-width="5"/>
+<path d="M450 410
+C430 395 425 380 438 370
+C446 364 454 368 450 376
+C456 366 466 364 474 370
+C487 380 480 396 450 410Z"
+fill="#ff2e43"/>
+</g>
+
+<!-- RIGHT HEART -->
+<g class="btn">
+<circle cx="760" cy="500" r="38" fill="url(#buttonBlue)" stroke="#5ea0d8" stroke-width="5"/>
+<path d="M760 520
+C740 505 735 490 748 480
+C756 474 764 478 760 486
+C766 476 776 474 784 480
+C797 490 790 506 760 520Z"
+fill="#ff2e43"/>
+</g>
+
+<!-- MAIN CONTROL FLOWER -->
+<g id="controls">
+
+<!-- UP -->
+<g class="btn" id="prevBtn">
+<path d="M530 350
+Q585 300 640 350
+Q585 400 530 350"
+fill="url(#buttonPink)"
+stroke="#ff72c8"
+stroke-width="6"/>
+<text x="585" y="360" text-anchor="middle" font-size="50" fill="#ff4eb2">⏮</text>
+</g>
+
+<!-- LEFT -->
+<g class="btn" id="backBtn">
+<path d="M480 400
+Q430 455 480 510
+Q540 455 480 400"
+fill="url(#buttonPink)"
+stroke="#ff72c8"
+stroke-width="6"/>
+<text x="485" y="470" text-anchor="middle" font-size="50" fill="#ff4eb2">⏪</text>
+</g>
+
+<!-- RIGHT -->
+<g class="btn" id="nextBtn">
+<path d="M690 400
+Q740 455 690 510
+Q630 455 690 400"
+fill="url(#buttonPink)"
+stroke="#ff72c8"
+stroke-width="6"/>
+<text x="685" y="470" text-anchor="middle" font-size="50" fill="#ff4eb2">⏩</text>
+</g>
+
+<!-- DOWN -->
+<g class="btn" id="stopBtn">
+<path d="M530 560
+Q585 615 640 560
+Q585 510 530 560"
+fill="url(#buttonPink)"
+stroke="#ff72c8"
+stroke-width="6"/>
+<rect x="565" y="545" width="40" height="40" rx="6" fill="#ff4eb2"/>
+</g>
+
+<!-- CENTER -->
+<g class="btn" id="playBtn">
+<circle cx="585" cy="455" r="55" fill="#ffffff" stroke="#ff9d2e" stroke-width="7"/>
+
+<g id="playIcon">
+<polygon points="570,425 570,485 620,455" fill="#ff8a00"/>
+</g>
+
+<g id="pauseIcon" style="display:none">
+<rect x="560" y="425" width="18" height="60" rx="4" fill="#ff8a00"/>
+<rect x="592" y="425" width="18" height="60" rx="4" fill="#ff8a00"/>
+</g>
+
+</g>
+
+</g>
+
+<!-- RAINBOW VOLUME -->
 <g>
-<ellipse cx="372" cy="40" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(-10 372 40)"/>
-<ellipse cx="440" cy="36" rx="11" ry="5" fill="url(#metalGrad)"/>
-<ellipse cx="560" cy="90" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(25 560 90)"/>
-<ellipse cx="610" cy="225" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(90 610 225)"/>
-<ellipse cx="548" cy="295" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(-25 548 295)"/>
-<ellipse cx="402" cy="286" rx="11" ry="5" fill="url(#metalGrad)"/>
-<ellipse cx="255" cy="245" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(25 255 245)"/>
-<ellipse cx="214" cy="160" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(90 214 160)"/>
-<ellipse cx="270" cy="92" rx="11" ry="5" fill="url(#metalGrad)" transform="rotate(35 270 92)"/>
+
+<path d="M220 510 A90 90 0 0 1 370 510" stroke="#ff3737" stroke-width="14" fill="none" stroke-linecap="round"/>
+<path d="M228 510 A82 82 0 0 1 362 510" stroke="#ff9f1c" stroke-width="14" fill="none" stroke-linecap="round"/>
+<path d="M236 510 A74 74 0 0 1 354 510" stroke="#ffe44d" stroke-width="14" fill="none" stroke-linecap="round"/>
+<path d="M244 510 A66 66 0 0 1 346 510" stroke="#45d96f" stroke-width="14" fill="none" stroke-linecap="round"/>
+<path d="M252 510 A58 58 0 0 1 338 510" stroke="#4fb6ff" stroke-width="14" fill="none" stroke-linecap="round"/>
+<path d="M260 510 A50 50 0 0 1 330 510" stroke="#7756ff" stroke-width="14" fill="none" stroke-linecap="round"/>
+
+<circle id="volumeKnob" cx="230" cy="465" r="16" fill="#74bfff" stroke="#2c82d0" stroke-width="5"/>
+
 </g>
-
-<!-- BUTTONS -->
-
-<g class="button" id="loadBtn">
-<path d="M120 170 Q145 140 175 170 Q190 205 170 235 Q145 255 118 235 Q95 205 120 170" fill="url(#buttonGrad)"/>
-<text x="145" y="210" text-anchor="middle" font-size="28" fill="#5d5100">≫|</text>
-</g>
-
-<g class="button" id="rewBtn">
-<path d="M55 255 Q90 225 125 255 Q135 280 122 302 Q88 320 58 300 Q40 278 55 255" fill="url(#buttonGrad)"/>
-<text x="88" y="290" text-anchor="middle" font-size="28" fill="#5d5100">≪</text>
-</g>
-
-<g class="button" id="playBtn">
-<path d="M125 255 Q155 225 188 255 Q200 280 188 302 Q155 320 125 300 Q108 278 125 255" fill="url(#buttonGrad)"/>
-<text id="playText" x="157" y="290" text-anchor="middle" font-size="28" fill="#5d5100">▶</text>
-</g>
-
-<g class="button" id="ffBtn">
-<path d="M195 255 Q228 225 260 255 Q273 280 260 302 Q228 320 198 300 Q180 278 195 255" fill="url(#buttonGrad)"/>
-<text x="228" y="290" text-anchor="middle" font-size="28" fill="#5d5100">≫</text>
-</g>
-
-<g class="button" id="stopBtn">
-<path d="M122 330 Q150 300 180 330 Q195 360 180 398 Q150 420 122 398 Q98 360 122 330" fill="url(#buttonGrad)"/>
-<text x="150" y="375" text-anchor="middle" font-size="30" fill="#5d5100">□</text>
-</g>
-
-<!-- TEXT -->
-
-<text id="songTitle" class="info" x="300" y="350" font-size="15" fill="#fff">NO TRACK LOADED</text>
-<text id="songArtist" class="info" x="300" y="372" font-size="12" fill="#ffd7ef">CLICK TOP BUTTON TO LOAD SONG</text>
-
-<!-- PROGRESS -->
-
-<rect x="300" y="392" width="240" height="8" rx="4" fill="#8d2664"/>
-<rect id="progress" x="300" y="392" width="0" height="8" rx="4" fill="#fff"/>
-
-<circle id="knob" cx="300" cy="396" r="10" fill="#fff" stroke="#ff73c9" stroke-width="3"/>
-
-<text id="time" class="info" x="420" y="425" text-anchor="middle" font-size="12" fill="#fff">0:00 / 0:00</text>
 
 </svg>
-</div>
 
 <audio id="audio"></audio>
+
+</div>
 
 <script>
 
 const player = document.getElementById('player');
-const audio = document.getElementById('audio');
 
-const playBtn = document.getElementById('playBtn');
-const stopBtn = document.getElementById('stopBtn');
-const ffBtn = document.getElementById('ffBtn');
-const rewBtn = document.getElementById('rewBtn');
-const loadBtn = document.getElementById('loadBtn');
+let dragging = false;
+let offsetX = 0;
+let offsetY = 0;
 
-const progress = document.getElementById('progress');
-const knob = document.getElementById('knob');
+player.addEventListener('mousedown', (e)=>{
 
-const title = document.getElementById('songTitle');
-const artist = document.getElementById('songArtist');
-const time = document.getElementById('time');
-const playText = document.getElementById('playText');
+  if(e.target.closest('.btn')) return;
 
-let playing = false;
+  dragging = true;
+  player.classList.add('dragging');
 
-/* LOAD */
-
-loadBtn.addEventListener('click',()=>{
-
-  const input = document.createElement('input');
-
-  input.type='file';
-  input.accept='audio/*';
-
-  input.onchange=e=>{
-
-    const file=e.target.files[0];
-    if(!file) return;
-
-    audio.src=URL.createObjectURL(file);
-
-    const clean=file.name.replace(/\.[^/.]+$/,'');
-    const split=clean.split('-');
-
-    if(split.length>1){
-      artist.textContent=split[0].trim().toUpperCase();
-      title.textContent=split[1].trim().toUpperCase();
-    }else{
-      title.textContent=clean.toUpperCase();
-      artist.textContent='UNKNOWN ARTIST';
-    }
-
-    audio.play();
-    playing=true;
-    playText.textContent='❚❚';
-
-  }
-
-  input.click();
+  offsetX = e.clientX - player.offsetLeft;
+  offsetY = e.clientY - player.offsetTop;
 
 });
 
-/* PLAY */
+window.addEventListener('mousemove', (e)=>{
 
-playBtn.addEventListener('click',()=>{
+  if(!dragging) return;
 
-  if(!audio.src) return;
-
-  if(playing){
-    audio.pause();
-    playing=false;
-    playText.textContent='▶';
-  }else{
-    audio.play();
-    playing=true;
-    playText.textContent='❚❚';
-  }
+  player.style.left = (e.clientX - offsetX) + 'px';
+  player.style.top = (e.clientY - offsetY) + 'px';
 
 });
 
-/* STOP */
-
-stopBtn.addEventListener('click',()=>{
-
-  audio.pause();
-  audio.currentTime=0;
-  playing=false;
-  playText.textContent='▶';
-
+window.addEventListener('mouseup', ()=>{
+  dragging = false;
+  player.classList.remove('dragging');
 });
 
-/* SEEK */
 
-ffBtn.addEventListener('click',()=>{
-  audio.currentTime += 5;
-});
+const sunRays = document.getElementById('sunRays');
+let rotation = 0;
 
-rewBtn.addEventListener('click',()=>{
-  audio.currentTime -= 5;
-});
+function animateSun(){
 
-/* UPDATE */
+  rotation += 0.08;
 
-audio.addEventListener('timeupdate',()=>{
+  sunRays.setAttribute(
+    'transform',
+    `translate(585 195) rotate(${rotation})`
+  );
 
-  const current=audio.currentTime;
-  const duration=audio.duration || 0;
-
-  const percent=current/duration;
-
-  progress.setAttribute('width', percent*240);
-  knob.setAttribute('cx', 300 + percent*240);
-
-  time.textContent=format(current)+' / '+format(duration);
-
-});
-
-function format(t){
-
-  if(!t || isNaN(t)) return '0:00';
-
-  const m=Math.floor(t/60);
-  const s=Math.floor(t%60);
-
-  return m+':'+String(s).padStart(2,'0');
-
+  requestAnimationFrame(animateSun);
 }
 
-/* DRAG */
+animateSun();
 
-let drag=false;
-let offsetX=0;
-let offsetY=0;
 
-player.addEventListener('mousedown',e=>{
+const audio = document.getElementById('audio');
+const playBtn = document.getElementById('playBtn');
+const playIcon = document.getElementById('playIcon');
+const pauseIcon = document.getElementById('pauseIcon');
+const progressFill = document.getElementById('progressFill');
+const progressKnob = document.getElementById('progressKnob');
+const currentTimeText = document.getElementById('currentTime');
+const durationText = document.getElementById('duration');
 
-  if(e.target.closest('.button')) return;
+let isPlaying = false;
 
-  drag=true;
+// ADD YOUR SONG HERE
+// audio.src = 'song.mp3';
 
-  offsetX=e.clientX-player.offsetLeft;
-  offsetY=e.clientY-player.offsetTop;
+playBtn.addEventListener('click', ()=>{
+
+  if(!audio.src){
+    alert('Add your mp3 file in code first');
+    return;
+  }
+
+  if(isPlaying){
+    audio.pause();
+
+    playIcon.style.display = 'block';
+    pauseIcon.style.display = 'none';
+
+  }else{
+    audio.play();
+
+    playIcon.style.display = 'none';
+    pauseIcon.style.display = 'block';
+  }
+
+  isPlaying = !isPlaying;
 
 });
 
-window.addEventListener('mousemove',e=>{
 
-  if(!drag) return;
+audio.addEventListener('timeupdate', ()=>{
 
-  player.style.left=(e.clientX-offsetX)+'px';
-  player.style.top=(e.clientY-offsetY)+'px';
+  if(!audio.duration) return;
+
+  const progress = audio.currentTime / audio.duration;
+
+  const width = 420 * progress;
+
+  progressFill.setAttribute('width', width);
+  progressKnob.setAttribute('cx', 190 + width);
+
+  currentTimeText.textContent = formatTime(audio.currentTime);
+  durationText.textContent = '-' + formatTime(audio.duration - audio.currentTime);
 
 });
 
-window.addEventListener('mouseup',()=>{
-  drag=false;
+
+function formatTime(seconds){
+
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+
+  return mins + ':' + String(secs).padStart(2,'0');
+}
+
+
+document.getElementById('backBtn').addEventListener('click', ()=>{
+  audio.currentTime -= 10;
+});
+
+
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  audio.currentTime += 10;
+});
+
+
+document.getElementById('stopBtn').addEventListener('click', ()=>{
+
+  audio.pause();
+  audio.currentTime = 0;
+
+  isPlaying = false;
+
+  playIcon.style.display = 'block';
+  pauseIcon.style.display = 'none';
+
+});
+
+
+const volumeKnob = document.getElementById('volumeKnob');
+
+let volumeDragging = false;
+
+volumeKnob.addEventListener('mousedown', ()=>{
+  volumeDragging = true;
+});
+
+window.addEventListener('mouseup', ()=>{
+  volumeDragging = false;
+});
+
+window.addEventListener('mousemove', (e)=>{
+
+  if(!volumeDragging) return;
+
+  const rect = player.getBoundingClientRect();
+
+  let x = e.clientX - rect.left;
+
+  x = Math.max(220, Math.min(370, x));
+
+  const percent = (x - 220) / 150;
+
+  audio.volume = percent;
+
+  const angle = -55 + percent * 110;
+
+  const radians = angle * Math.PI / 180;
+
+  const radius = 90;
+
+  const cx = 295 + Math.cos(radians) * radius;
+  const cy = 510 + Math.sin(radians) * radius;
+
+  volumeKnob.setAttribute('cx', cx);
+  volumeKnob.setAttribute('cy', cy);
+
 });
 
 </script>
