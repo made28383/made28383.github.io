@@ -1,204 +1,101 @@
 <!DOCTYPE html>
 <html lang="et">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interaktiivne MP3-mängija</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            /* Tume taust, et näha läbipaistvust akna ümber */
-            background: #1a1a1a url('data:image/svg+xml;utf8,<svg xmlns="http://w3.org" width="40" height="40" viewBox="0 0 40 40"><rect width="20" height="20" fill="%23222"/><rect x="20" y="20" width="20" height="20" fill="%23222"/></svg>');
-            overflow: hidden;
-            font-family: sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MP3 Player</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#1a0a2e 0%,#0d1a3a 50%,#1a0a2e 100%);
+  overflow:hidden;
+  font-family:'Georgia',serif;
+}
+#player{
+  position:fixed;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  width:300px;height:300px;
+  cursor:grab;
+}
+#player:active{cursor:grabbing;}
+#player.dragging{transition:none;}
+#player svg{width:100%;height:100%;overflow:visible;}
+.btn-hit{cursor:pointer;}
+.btn-hit:hover .btn-face{filter:brightness(1.18);} 
+.btn-hit:active .btn-face{filter:brightness(0.82);} 
 
-        /* Liigutatav vidina konteiner */
-        #mp3-player-widget {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 640px;
-            height: 420px;
-            cursor: move;
-            user-select: none;
-            /* Väline vari kogu seadmele sügavuse andmiseks */
-            filter: drop-shadow(8px 12px 16px rgba(0, 0, 0, 0.6));
-            z-index: 9999;
-        }
-
-        /* Korpus */
-        .body-base {
-            fill: #ca5299;
-        }
-
-        /* Nupud */
-        .control-button {
-            fill: #cfc263;
-            cursor: pointer;
-            transition: filter 0.1s ease;
-        }
-
-        .control-button:hover {
-            filter: brightness(1.1) url(#button-bevel);
-        }
-
-        .control-button:active {
-            filter: brightness(0.9) url(#button-pressed);
-        }
-
-        /* Nuppude ikoonid */
-        .icon {
-            fill: #3e3816;
-            pointer-events: none;
-        }
-
-        /* Akna raam */
-        .window-frame {
-            fill: #db4394;
-        }
-
-        /* Raami needid/täpid */
-        .frame-rivet {
-            fill: #5a5759;
-            stroke: #2e2a2c;
-            stroke-width: 1;
-        }
-
-        /* Päikese kiirte pöörlemisanimatsioon */
-        .sun-rays {
-            transform-origin: 465px 135px;
-            animation: rotateRays 40s linear infinite;
-        }
-
-        @keyframes rotateRays {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    </style>
+/* Päikese animatsioon */
+#sun { transform-origin: 150px 150px; }
+.pulse {
+    animation: pulseBeat 1s infinite ease-in-out;
+}
+@keyframes pulseBeat {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.3); filter: brightness(1.5); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+</style>
 </head>
 <body>
 
-    <div id="mp3-player-widget">
-        <svg viewBox="0 0 640 420" width="100%" height="100%" xmlns="http://w3.org">
-            <defs>
-                <!-- Filtri efektid mahu ja plastilisuse (bevel) loomiseks -->
-                <filter id="body-shadow" x="-10%" y="-10%" width="120%" height="120%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
-                    <feOffset dx="3" dy="5" result="offsetblur"/>
-                    <feComponentTransfer>
-                        <feFuncA type="linear" slope="0.4"/>
-                    </feComponentTransfer>
-                    <feMerge> 
-                        <feMergeNode/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
+<div id="player">
+<svg id="main-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
 
-                <!-- Korpuse sisemine esiletõst (maht) -->
-                <filter id="inner-glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feSpecularLighting surfaceScale="5" specularConstant="0.7" specularExponent="12" lighting-color="#ffffff" result="specOut">
-                        <feDistantLight azimuth="225" elevation="55"/>
-                    </feSpecularLighting>
-                    <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specChar"/>
-                    <feComposite in="SourceGraphic" in2="specChar" operator="arithmetic" k2="1" k3="0.4"/>
-                </filter>
+<!-- OLEMASOLEV GRAAFIKA -->
+<defs>
+  <radialGradient id="bodyG" cx="38%" cy="32%" r="60%">
+    <stop offset="0%" stop-color="#d3b7ff"/>
+    <stop offset="100%" stop-color="#5a3f90"/>
+  </radialGradient>
+</defs>
 
-                <!-- Nuppude kumeruse (Bevel) filter -->
-                <filter id="button-bevel" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
-                    <feSpecularLighting in="blur" surfaceScale="3" specularConstant="1" specularExponent="8" lighting-color="#fff" result="spec">
-                        <feDistantLight azimuth="225" elevation="45"/>
-                    </feSpecularLighting>
-                    <feComposite in="spec" in2="SourceAlpha" operator="in" result="specOut"/>
-                    <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k2="1" k3="0.6" result="lit"/>
-                    <feContentTransfer>
-                        <feFuncA type="linear" slope="0.2"/>
-                    </feContentTransfer>
-                    <feRemove/>
-                </filter>
+<!-- PÄIKE -->
+<g id="sun" class="pulse">
+    <circle cx="150" cy="150" r="40" fill="#ffdd55" stroke="#ffaa00" stroke-width="6"/>
+    <g stroke="#ffcc33" stroke-width="6">
+        <line x1="150" y1="95" x2="150" y2="60"/>
+        <line x1="150" y1="205" x2="150" y2="240"/>
+        <line x1="95" y1="150" x2="60" y2="150"/>
+        <line x1="205" y1="150" x2="240" y2="150"/>
+        <line x1="110" y1="110" x2="80" y2="80"/>
+        <line x1="190" y1="110" x2="220" y2="80"/>
+        <line x1="110" y1="190" x2="80" y2="220"/>
+        <line x1="190" y1="190" x2="220" y2="220"/>
+    </g>
+</g>
 
-                <filter id="button-pressed">
-                    <feOffset dx="1" dy="1"/>
-                    <feGaussianBlur stdDeviation="1" result="blur"/>
-                    <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
-                    <feComposite operator="id" in2="SourceAlpha"/>
-                    <feBlend mode="multiply" in2="SourceGraphic"/>
-                </filter>
+<!-- LÕPP SVG -->
+</svg>
+</div>
 
-                <!-- Mask, mis hoiab päikese ja pilved rangelt ainult akna sees -->
-                <clipPath id="window-clip">
-                    <path d="M 264,166 C 248,63 460,25 548,110 C 614,174 584,295 504,248 C 420,199 285,250 264,166 Z"/>
-                </clipPath>
+<script>
+// Muusikarütmi põhinev päikese pulseerimine
+const audio = new Audio('music.mp3');
+let ctx, analyser, dataArray;
 
-                <!-- Realistlikud gradientid päikese ja pilvede jaoks -->
-                <radialGradient id="sun-gradient" cx="35%" cy="35%" r="65%">
-                    <stop offset="0%" stop-color="#ffffff"/>
-                    <stop offset="20%" stop-color="#fff59d"/>
-                    <stop offset="60%" stop-color="#ffb300"/>
-                    <stop offset="100%" stop-color="#ff3d00"/>
-                </radialGradient>
-                
-                <radialGradient id="sun-glow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#ffb300" stop-opacity="0.5"/>
-                    <stop offset="100%" stop-color="#ff3d00" stop-opacity="0"/>
-                </radialGradient>
+function setupAudio() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ctx.createMediaElementSource(audio);
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 128;
+    src.connect(analyser);
+    analyser.connect(ctx.destination);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+}
 
-                <linearGradient id="cloud-gradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#ffffff"/>
-                    <stop offset="35%" stop-color="#f5e1ed"/>
-                    <stop offset="75%" stop-color="#d19bbd"/>
-                    <stop offset="100%" stop-color="#9c5a82"/>
-                </linearGradient>
-            </defs>
+function animateSun() {
+    requestAnimationFrame(animateSun);
+    analyser.getByteFrequencyData(dataArray);
+    let bass = dataArray[1];
+    let scale = 1 + bass / 200;
+    document.getElementById('sun').style.transform = `scale(${scale})`;
+}
 
-            <!-- 1. MÄNGIJA PÕHIKORPUS (Täpne originaalkuju koos efektidega) -->
-            <g filter="url(#body-shadow)">
-                <path class="body-base" filter="url(#inner-glow)" d="M 44,228 C 24,142 178,154 218,131 C 258,111 268,28 418,9 C 578,-11 648,130 618,242 C 578,382 398,342 298,392 C 198,442 42,402 22,322 C 7,262 64,314 44,228 Z" />
-            </g>
+setupAudio();
+audio.play();
+animateSun();
+</script>
 
-            <!-- 2. LÄBIPAISTEV AKNA SISASTATUD MEEDIA (Klippitud akna kuju sisse) -->
-            <g clip-path="url(#window-clip)">
-                <!-- Tagataust on täielikult läbipaistev, paistab läbi korpuse taha -->
-                
-                <!-- REALISTLIK PÄIKE -->
-                <g id="screen-sun">
-                    <!-- Päikese kuma/aura -->
-                    <circle cx="465" cy="135" r="90" fill="url(#sun-glow)" />
-                    <!-- Päikese kiired -->
-                    <g class="sun-rays" stroke="#ffee58" stroke-width="3" opacity="0.4" stroke-dasharray="8 12">
-                        <line x1="465" y1="25" x2="465" y2="245" />
-                        <line x1="355" y1="135" x2="575" y2="135" />
-                        <line x1="387" y1="57" x2="543" y2="213" />
-                        <line x1="387" y1="213" x2="543" y2="57" />
-                    </g>
-                    <!-- Päikese tuum -->
-                    <circle cx="465" cy="135" r="42" fill="url(#sun-gradient)" filter="drop-shadow(0px 0px 8px rgba(255,145,0,0.5))" />
-                    <!-- Päikese pinnasära -->
-                    <circle cx="452" cy="122" r="35" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.4"/>
-                </g>
-
-                <!-- REALISTLIKUD PILVED (Ainult alumises servas) -->
-                <g id="screen-clouds" opacity="0.95">
-                    <!-- Tagumine udune varjupilv sügavuseks -->
-                    <path d="M 240,240 Q 280,180 340,195 Q 400,160 460,200 Q 520,170 570,220 L 550,290 L 260,290 Z" fill="#a6638b" filter="blur(8px)" opacity="0.6"/>
-                    <!-- Peamine kohev pilvmasse -->
-                    <path d="M 235,245 C 255,190 320,185 345,210 C 375,175 440,175 470,210 C 500,185 550,195 570,235 C 595,270 545,305 490,295 C 410,310 310,300 255,280 C 225,265 215,255 235,245 Z" fill="url(#cloud-gradient)"/>
-                    <!-- Pilve ülemise serva särav esiletõst -->
-                    <path d="M 250,238 C 265,205 315,200 335,220 C 365,190 430,190 455,220 C 485,200 530,205 550,240" fill="none" stroke="#ffffff" stroke-width="4" filter="blur(2px)" opacity="0.8" />
-                </g>
-            </g>
-
-            <!-- 3. AKNA ROOSA RAAM JA DETALID (Originaalpaigutus) -->
-            <path class="window-frame" filter="url(#button-bevel)" d="M 264,166 C 248,63 460,25 548,110 C 614,174 584,295 504,248 C 420,199 285,250 264,166 Z M 274,164 C 292,238 418,190 498,238 C 568,280 594,170 536,114 C 458,39 288,73 274,164 Z"/>
-            
-            <!-- Raami jaotuskriipsud ja metallist täpid -->
-            <g id="frame-details">
-                <!-- Kriipsud raamil -->
-                <path stroke="#631441" stroke-width="1.5" d="M 326,71 L 329,58 M 409,51 L 410,38 M 497,63 L 502,51 M 564,119 L 576,113 M 572,198 L 585,203 M 497,232 L 502,245 M 398,220 L 398,233 M 304,196 L 293,201" />
-                <!-- Metallist täpikesed (needid) -->
-                <ellipse class="frame-rivet" cx="292" cy="115" rx="5" ry="3" transform="rotate(-30 292 115)" />
-                <ellipse class="frame-rivet" cx="367" cy="59" rx="5" ry="3" transform="rotate(-10 367 59)" />
+</body>
+</html>
