@@ -1,68 +1,645 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Draggable MP3 Player</title>
+<meta charset="UTF-8">
+<title>Pink MP3 Player Widget</title>
 <style>
-  body {
-    background: #fafafa;
-    margin: 0;
-    height: 200vh;
-    font-family: sans-serif;
-  }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: #1a1a22;
+    font-family: system-ui, sans-serif; color: #eee; overflow: hidden; }
+  .page-hint { position: fixed; top: 20px; left: 20px; opacity: .5; font-size: 13px; }
 
-  /* Draggable container */
   #player {
-    position: absolute;
-    top: 100px;
-    left: 100px;
-    width: 500px;
-    height: 330px;
+    position: fixed;
+    top: 80px; left: 80px;
+    width: 360px;
+    height: 360px;
     cursor: grab;
     user-select: none;
-  }
+    filter: drop-shadow(0 22px 26px rgba(0,0,0,.6)) drop-shadow(0 4px 6px rgba(0,0,0,.4));
 
-  /* Example placeholder shape until SVG added */
-  .player-bg {
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 30% 30%, #ffd2f3, #ff5fb7);
-    border-radius: 40% 60% 50% 50%;
-    box-shadow: inset 0 6px 12px #ffffffaa, inset 0 -8px 14px #c90067aa,
-                0 10px 20px #00000040;
+    touch-action: none;
+    z-index: 9999;
+  }
+  #player.dragging { cursor: grabbing; }
+  #player svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+  /* Buttons interactive states */
+  .btn { cursor: pointer; transition: transform .08s ease; transform-box: fill-box; transform-origin: center; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: scale(.94); }
+  .icon { pointer-events: none; }
+
+  /* Screen text */
+  .screen-text {
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+    fill: #2a1a2e;
+    text-anchor: middle;
   }
 </style>
 </head>
 <body>
+<div class="page-hint">Lohista mängijat hiirega ✦ Vajuta nuppe</div>
+
 
 <div id="player">
-  <div class="player-bg"></div>
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Pink body gradient -->
+    <radialGradient id="bodyGrad" cx="40%" cy="35%" r="80%">
+      <stop offset="0%" stop-color="#ff8fc8"/>
+      <stop offset="55%" stop-color="#d94a92"/>
+      <stop offset="100%" stop-color="#7a1f4d"/>
+    </radialGradient>
+    <linearGradient id="bodyRim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".6"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity=".5"/>
+    </linearGradient>
+
+    <!-- Screen edge (inner ring around screen) -->
+    <radialGradient id="ringGrad" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#ff5a9e"/>
+      <stop offset="100%" stop-color="#8a1f55"/>
+    </radialGradient>
+
+    <!-- Gold buttons -->
+    <radialGradient id="goldGrad" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#fff6b0"/>
+      <stop offset="55%" stop-color="#d9b94a"/>
+      <stop offset="100%" stop-color="#7a5a14"/>
+    </radialGradient>
+
+    <!-- Screen LCD -->
+    <linearGradient id="screenGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#cfe8b8"/>
+      <stop offset="100%" stop-color="#7fa86a"/>
+    </linearGradient>
+
+    <!-- Rainbow gradient for volume track -->
+    <linearGradient id="rainbowGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#ff2d55"/>
+      <stop offset="17%"  stop-color="#ff8a1f"/>
+      <stop offset="34%"  stop-color="#ffd60a"/>
+      <stop offset="50%"  stop-color="#34c759"/>
+      <stop offset="67%"  stop-color="#00c7ff"/>
+      <stop offset="84%"  stop-color="#5e5ce6"/>
+      <stop offset="100%" stop-color="#bf5af2"/>
+    </linearGradient>
+
+    <!-- Glossy top highlight across the body -->
+    <linearGradient id="glossGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#ffffff" stop-opacity=".55"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity=".05"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Studs around the ring -->
+    <radialGradient id="studGrad" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f5f5f5"/>
+      <stop offset="60%" stop-color="#888"/>
+      <stop offset="100%" stop-color="#222"/>
+    </radialGradient>
+
+    <filter id="innerShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="off"/>
+      <feComposite in="off" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="sh"/>
+      <feColorMatrix in="sh" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0" result="csh"/>
+      <feComposite in="csh" in2="SourceGraphic" operator="in"/>
+    </filter>
+
+    <!-- Strong bevel filter for buttons: highlight + shadow -->
+    <filter id="btnShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.4" result="blur"/>
+      <feOffset in="blur" dx="0" dy="1.6" result="off"/>
+      <feComponentTransfer in="off" result="shadow"><feFuncA type="linear" slope=".8"/></feComponentTransfer>
+      <feSpecularLighting in="blur" surfaceScale="3" specularConstant=".9"
+                          specularExponent="22" lighting-color="#fff8d0" result="spec">
+        <fePointLight x="-50" y="-80" z="120"/>
+      </feSpecularLighting>
+      <feComposite in="spec" in2="SourceAlpha" operator="in" result="specClip"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+        <feMergeNode in="specClip"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft inner shadow inside the window hole -->
+    <filter id="windowInner" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="2" result="off"/>
+      <feComposite in="off" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="sh"/>
+      <feColorMatrix in="sh" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .75 0"/>
+    </filter>
+
+
+    <!-- Highlight overlay clipped to body -->
+    <clipPath id="bodyClip">
+      <path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"/>
+    </clipPath>
+
+    <!-- Window punch-out mask: white = visible, black = hole -->
+    <mask id="windowMask" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="300">
+      <rect width="300" height="300" fill="white"/>
+      <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
+        fill="black"/>
+    </mask>
+
+    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffbe0"/>
+      <stop offset="60%" stop-color="#ffd24a"/>
+      <stop offset="100%" stop-color="#ff8a1f"/>
+    </radialGradient>
+    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe88a" stop-opacity=".85"/>
+      <stop offset="100%" stop-color="#ffd24a" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Plastic grain noise overlay -->
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7" result="n"/>
+      <feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .35 0"/>
+    </filter>
+
+    <!-- Curved glass reflection over the window -->
+    <linearGradient id="glassRefl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#ffffff" stop-opacity=".55"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity=".08"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Stud highlight gradient (chrome) -->
+    <radialGradient id="studHi" cx="35%" cy="25%" r="65%">
+      <stop offset="0%"  stop-color="#ffffff"/>
+      <stop offset="35%" stop-color="#dcdcdc"/>
+      <stop offset="75%" stop-color="#5a5a5a"/>
+      <stop offset="100%" stop-color="#101010"/>
+    </radialGradient>
+
+    <clipPath id="windowClip">
+      <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"/>
+    </clipPath>
+  </defs>
+
+
+  <!-- 1. Sun (drawn first, behind body — visible through the hole) -->
+  <g id="sunGroup">
+    <circle id="sunHalo" cx="190" cy="117" r="28" fill="url(#sunGlow)"/>
+    <g id="rays" transform="translate(190 117)">
+      <g id="raysRotate">
+        <g id="raysPulse"></g>
+      </g>
+    </g>
+    <circle id="sunBody" cx="190" cy="117" r="12" fill="url(#sunGrad)" stroke="#a85b00" stroke-width=".4"/>
+  </g>
+
+  <!-- Hidden path used to position studs around the whole screen edge -->
+  <path id="studPath" d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z"
+        fill="none" stroke="none"/>
+
+
+  <!-- 2. Main body (with window hole) -->
+  <g mask="url(#windowMask)">
+    <path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
+      fill="url(#bodyGrad)"/>
+    <g clip-path="url(#bodyClip)">
+      <ellipse cx="120" cy="75" rx="120" ry="28" fill="#fff" opacity=".35"/>
+      <ellipse cx="60" cy="200" rx="55" ry="14" fill="#fff" opacity=".12"/>
+      <path d="M21,170 q150,60 270,-10 q-20,80 -150,75 q-110,5 -120,-65z" fill="#000" opacity=".25"/>
+    </g>
+    <path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
+      fill="none" stroke="url(#bodyRim)" stroke-width="2"/>
+  </g>
+
+  <!-- 3. Inner bezel ring with hole (visible as a frame around the window) -->
+  <g mask="url(#windowMask)">
+    <path d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z"
+      fill="url(#ringGrad)"/>
+    <g id="studs"></g>
+  </g>
+
+  <!-- 4. Window rim stroke (frames the hole nicely) -->
+  <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
+        fill="none" stroke="#3a0f24" stroke-width="1.2" opacity=".7"/>
+
+
+
+
+  <!-- Glossy top sheen over the body (adds plastic realism) -->
+  <g mask="url(#windowMask)" clip-path="url(#bodyClip)" pointer-events="none">
+    <ellipse cx="130" cy="78" rx="125" ry="32" fill="url(#glossGrad)"/>
+    <!-- Lower-left soft secondary sheen -->
+    <ellipse cx="80" cy="210" rx="70" ry="14" fill="#ffffff" opacity=".12"/>
+    <!-- Plastic grain noise (very subtle) -->
+    <path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
+          fill="#000" filter="url(#grain)" opacity=".25"/>
+  </g>
+
+  <!-- Soft dark inner shadow inside the window hole -->
+  <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
+        fill="black" opacity=".4" filter="url(#windowInner)" pointer-events="none"/>
+
+  <!-- Curved glass reflection on the window (sun visible through) -->
+  <g clip-path="url(#windowClip)" pointer-events="none">
+    <path d="M120,90 q60,-30 145,15 q-40,-5 -85,5 q-50,8 -60,-20z" fill="url(#glassRefl)" opacity=".7"/>
+  </g>
+
+  <!-- Reusable decorative stickers -->
+  <defs>
+    <g id="flower">
+      <circle cx="0" cy="-4" r="2.6" fill="#fff7fb"/>
+      <circle cx="3.8" cy="-1.2" r="2.6" fill="#fff7fb"/>
+      <circle cx="2.3" cy="3.4" r="2.6" fill="#fff7fb"/>
+      <circle cx="-2.3" cy="3.4" r="2.6" fill="#fff7fb"/>
+      <circle cx="-3.8" cy="-1.2" r="2.6" fill="#fff7fb"/>
+      <circle cx="0" cy="0" r="1.4" fill="#ffd84a" stroke="#a86a00" stroke-width=".25"/>
+    </g>
+    <path id="heart" d="M0,4 C-5,0 -5,-4 -2.5,-4 C-1,-4 0,-2.8 0,-1.6 C0,-2.8 1,-4 2.5,-4 C5,-4 5,0 0,4Z"
+          fill="#ff5fa0" stroke="#7a1f4d" stroke-width=".35"/>
+    <polygon id="star" points="0,-5 1.3,-1.6 4.8,-1.6 2,.6 3.1,4 0,2 -3.1,4 -2,.6 -4.8,-1.6 -1.3,-1.6"
+             fill="#fff2b0" stroke="#a86a00" stroke-width=".3"/>
+    <g id="sparkle">
+      <path d="M0,-5 L.7,-.7 L5,0 L.7,.7 L0,5 L-.7,.7 L-5,0 L-.7,-.7Z" fill="#ffffff" opacity=".95"/>
+      <circle cx="0" cy="0" r=".6" fill="#fff"/>
+    </g>
+  </defs>
+
+
+  <!-- Sticker scatter (kept ON the pink body, off the screen window) -->
+  <g mask="url(#windowMask)" clip-path="url(#bodyClip)" pointer-events="none">
+    <!-- Flowers -->
+    <use href="#flower" transform="translate(50 135) rotate(-12) scale(1.1)"/>
+    <use href="#flower" transform="translate(248 100) rotate(18) scale(1.3)"/>
+    <use href="#flower" transform="translate(215 230) rotate(-22) scale(1.15)"/>
+    <use href="#flower" transform="translate(145 240) rotate(8) scale(.95)"/>
+    <use href="#flower" transform="translate(78 230) rotate(25) scale(1.05)"/>
+    <use href="#flower" transform="translate(40 175) rotate(5) scale(.85)"/>
+
+    <!-- Hearts -->
+    <use href="#heart" transform="translate(270 125) rotate(15) scale(1.2)"/>
+    <use href="#heart" transform="translate(185 245) rotate(-10) scale(1.3)"/>
+    <use href="#heart" transform="translate(58 155) rotate(-25) scale(1.0)"/>
+    <use href="#heart" transform="translate(118 248) rotate(20) scale(.9)"/>
+    <use href="#heart" transform="translate(245 165) rotate(-12) scale(.9)"/>
+
+    <!-- Stars -->
+    <use href="#star" transform="translate(265 195) rotate(12) scale(1.05)"/>
+    <use href="#star" transform="translate(105 110) rotate(-8) scale(.9)"/>
+    <use href="#star" transform="translate(65 198) rotate(18) scale(.85)"/>
+    <use href="#star" transform="translate(168 95) rotate(20) scale(.7)"/>
+
+    <!-- Sparkles -->
+    <use href="#sparkle" transform="translate(55 118) scale(1.1)"/>
+    <use href="#sparkle" transform="translate(195 110) scale(.9)"/>
+    <use href="#sparkle" transform="translate(238 205) scale(1.0)"/>
+    <use href="#sparkle" transform="translate(95 248) scale(.85)"/>
+    <use href="#sparkle" transform="translate(272 152) scale(.9)"/>
+    <use href="#sparkle" transform="translate(130 225) scale(.7)"/>
+    <use href="#sparkle" transform="translate(35 195) scale(.7)"/>
+
+
+  </g>
+
+  <!-- Final photographic specular pinpoint (top-left of body) -->
+  <g mask="url(#windowMask)" clip-path="url(#bodyClip)" pointer-events="none">
+    <ellipse cx="95" cy="75" rx="22" ry="6" fill="#ffffff" opacity=".55"/>
+    <ellipse cx="95" cy="75" rx="8" ry="2.2" fill="#ffffff" opacity=".9"/>
+  </g>
+
+
+
+
+
+  <!-- Progress bar (draggable scrub) -->
+  <g id="progressGroup" style="cursor:pointer">
+    <text id="elapsedText" x="145" y="180" font-size="7" fill="#3a0f24"
+          text-anchor="end" style="font-family:'Courier New',monospace;font-weight:bold;">0:00</text>
+    <text id="remainText" x="241" y="180" font-size="7" fill="#3a0f24"
+          text-anchor="start" style="font-family:'Courier New',monospace;font-weight:bold;">-0:00</text>
+    <rect id="progressTrack" x="148" y="176" width="90" height="3" rx="1.5" fill="#3a1228"/>
+    <rect id="progressFill" x="148" y="176" width="0" height="3" rx="1.5" fill="#ffd96b" opacity=".95"/>
+    <polygon id="seekerKnob" points="148,185 151,182 145,182" fill="#ffe98c" stroke="#5a3a00" stroke-width=".4"/>
+  </g>
+
+  <!-- Artist + Title (under progress bar) -->
+  <text id="artistText" x="193" y="192" font-size="7" fill="#3a0f24" text-anchor="middle"
+        style="font-family:'Courier New',monospace;font-weight:bold;letter-spacing:.5px;">— TUNDMATU ESITAJA —</text>
+  <text id="titleText" x="193" y="200" font-size="8" fill="#3a0f24" text-anchor="middle"
+        style="font-family:'Courier New',monospace;font-weight:bold;">♪ Lugu pole valitud ♪</text>
+
+  <!-- Volume bar (draggable rainbow) -->
+  <g id="volumeGroup">
+    <!-- rainbow track -->
+    <rect id="volTrack" x="168" y="209" width="50" height="3.4" rx="1.7" fill="url(#rainbowGrad)" style="cursor:pointer"/>
+    <!-- inner shadow line for groove realism -->
+    <rect x="168" y="209" width="50" height="1" rx=".5" fill="#000" opacity=".25" pointer-events="none"/>
+    <!-- darken the unfilled (right) portion via overlay -->
+    <rect id="volDim" x="193" y="209" width="25" height="3.4" rx="1.7" fill="#000" opacity=".45" pointer-events="none"/>
+    <!-- knob (metal) -->
+    <circle id="volKnob" cx="193" cy="210.7" r="3"
+            fill="url(#goldGrad)" stroke="#3a2400" stroke-width=".5" style="cursor:pointer"/>
+    <circle cx="193" cy="210.7" r="1.1" fill="#fff7c8" opacity=".7" pointer-events="none"/>
+
+    <!-- Speaker icon BELOW the bar, centered -->
+    <g transform="translate(189 217)" pointer-events="none">
+      <polygon points="0,0 0,5 3,6 3,-1" fill="#3a1228"/>
+      <path d="M5,-.5 q2.2,3 0,6 M7,-2 q3.8,5 0,9"
+            stroke="#3a1228" stroke-width=".9" fill="none" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- Subtle brand mark for realism -->
+  <text x="200" y="232" font-size="4.2" fill="#2a0a1c" text-anchor="middle" pointer-events="none"
+        style="font-family:'Helvetica Neue',Arial,sans-serif;font-weight:900;letter-spacing:2px;opacity:.55;">M  P  3</text>
+
+
+
+
+
+
+
+  <!-- BUTTONS -->
+  <!-- next_song (top) -->
+  <g class="btn" data-action="next">
+    <path d="M79.26,155.43c-6.53-.35-11.93-11.85-10.15-18.4,2.37-8.71,17.38-9.57,20.08-2.11,2.28,6.3-2.49,20.92-9.93,20.51Z"
+      fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
+    <g class="icon" stroke="#3a2400" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="75.33,139.78 79.91,142.83 75.33,145.51"/>
+      <line x1="81.11" y1="139.4" x2="81.11" y2="145.89"/>
+      <line x1="83.14" y1="139.4" x2="83.14" y2="145.89"/>
+    </g>
+  </g>
+
+  <!-- rewind (left) -->
+  <g class="btn" data-action="rewind">
+    <path d="M63.47,171.1c.09-3.76-10.41-10.53-19.42-7.09-7.37,2.82-9.75,10.94-6.83,13.73,4.64,4.44,26.12-1.32,26.25-6.65Z"
+      fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
+    <g class="icon" stroke="#3a2400" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="47.51,174.12 42.42,171.62 47.51,168.4"/>
+      <polyline points="52.29,174.06 47.2,171.56 52.29,168.34"/>
+    </g>
+  </g>
+
+  <!-- play/stop (center) -->
+  <g class="btn" data-action="play">
+    <path d="M67.28,172.46c-2.36-5.35,3.69-11.89,10.68-12.17,6.43-.26,12.34,4.84,13.19,9.43.63,3.4-1.15,8.49-6.91,9.82-6.45,1.48-14.91-2.43-16.96-7.07Z"
+      fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
+    <g class="icon" stroke="#3a2400" stroke-width="1" fill="#3a2400" stroke-linejoin="round">
+      <polygon points="72.47,166.44 72.47,173.69 78.19,170.07"/>
+      <line x1="81.11" y1="166.82" x2="81.11" y2="173.31" stroke-linecap="round"/>
+      <line x1="83.14" y1="166.82" x2="83.14" y2="173.31" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- fast_forward (right) -->
+  <g class="btn" data-action="forward">
+    <path d="M94.07,170.28c-1.38-4.73,10.64-11.58,18.87-9.67,7.75,1.8,10.51,11,4.97,14.35-6.14,3.71-22.4.25-23.84-4.68Z"
+      fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
+    <g class="icon" stroke="#3a2400" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="108.06,165.54 112.64,168.59 108.06,171.26"/>
+      <polyline points="102.81,165.54 107.39,168.59 102.81,171.26"/>
+    </g>
+  </g>
+
+  <!-- close/stop (bottom) -->
+  <g class="btn" data-action="stop">
+    <path d="M76.63,185.19c-4.97,3.72-7.28,17.9-5.22,24.13,3.1,9.38,17.22,3.94,18.27-5.22.88-7.58-6.49-23.82-13.05-18.91Z"
+      fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
+    <rect class="icon" x="76.54" y="196.38" width="6.74" height="5.73" fill="none" stroke="#3a2400" stroke-width="1"/>
+  </g>
+
+</svg>
 </div>
 
 <script>
-// Basic dragging
-const player = document.getElementById("player");
-let isDown = false;
-let offset = [0, 0];
+/* ---------------- Studs ALL the way around the screen window ---------------- */
+(function placeStuds(){
+  const ringG = document.getElementById('studs');
+  const path  = document.getElementById('studPath');
+  const total = path.getTotalLength();
+  const count = 28;
+  for (let i = 0; i < count; i++){
+    const p = path.getPointAtLength((i / count) * total);
+    const stud = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+    stud.setAttribute('cx', p.x);
+    stud.setAttribute('cy', p.y);
+    stud.setAttribute('rx', 2.4);
+    stud.setAttribute('ry', 1.7);
+    stud.setAttribute('fill','url(#studHi)');
 
-player.addEventListener("mousedown", (e) => {
-  isDown = true;
-  offset = [player.offsetLeft - e.clientX, player.offsetTop - e.clientY];
-  player.style.cursor = "grabbing";
-});
+    stud.setAttribute('stroke','#1a1a1a');
+    stud.setAttribute('stroke-width','.3');
+    ringG.appendChild(stud);
+  }
+})();
 
-window.addEventListener("mouseup", () => {
-  isDown = false;
-  player.style.cursor = "grab";
-});
+/* ---------------- Dragging ---------------- */
+(function dragger(){
+  const el = document.getElementById('player');
+  let dx=0, dy=0, dragging=false;
+  el.addEventListener('pointerdown', e => {
+    if (e.target.closest('.btn')) return;
+    if (e.target.closest('#volumeGroup')) return;
+    if (e.target.closest('#progressGroup')) return;
 
-window.addEventListener("mousemove", (e) => {
-  if (!isDown) return;
-  player.style.left = e.clientX + offset[0] + "px";
-  player.style.top = e.clientY + offset[1] + "px";
-});
+    dragging = true;
+    el.classList.add('dragging');
+    const r = el.getBoundingClientRect();
+    dx = e.clientX - r.left;
+    dy = e.clientY - r.top;
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    el.style.left = (e.clientX - dx) + 'px';
+    el.style.top  = (e.clientY - dy) + 'px';
+  });
+  const end = () => { dragging = false; el.classList.remove('dragging'); };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+})();
+
+/* ---------------- Sun rays ---------------- */
+(function buildRays(){
+  const g = document.getElementById('raysPulse');
+  const count = 12;
+  for (let i=0; i<count; i++){
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    const w = 2.4, h = 14;
+    r.setAttribute('x', -w/2);
+    r.setAttribute('y', -h - 16);
+    r.setAttribute('width', w);
+    r.setAttribute('height', h);
+    r.setAttribute('rx', 1.2);
+    r.setAttribute('fill', 'url(#sunGrad)');
+    r.setAttribute('opacity', '.9');
+    r.setAttribute('transform', `rotate(${i * (360/count)})`);
+    g.appendChild(r);
+  }
+})();
+
+/* ---------------- State ---------------- */
+const state = {
+  playing:  false,
+  sunVisible: true,
+  duration: 213,
+  elapsed:  0,
+  volume:   0.5,
+  artist:   '— TUNDMATU ESITAJA —',
+  title:    '\u266A Lugu pole valitud \u266A',
+};
+
+/* ---------------- Sun animation (freezes on pause) ---------------- */
+(function animate(){
+  const rotateG = document.getElementById('raysRotate');
+  const pulseG  = document.getElementById('raysPulse');
+  const halo    = document.getElementById('sunHalo');
+  const sun     = document.getElementById('sunBody');
+
+  // accumulators that only advance while playing → freeze on pause
+  let lastNow = performance.now();
+  let phase = 0;    // beat phase
+  let angle = 0;    // rotation degrees
+
+  function frame(now){
+    const dt = (now - lastNow) / 1000;
+    lastNow = now;
+    if (state.playing){
+      const bpm = 120;
+      phase += dt * (bpm/60) * Math.PI;
+      angle = (angle + dt * 30) % 360;
+    }
+    const beat = (Math.sin(phase) + 1) / 2;
+    rotateG.setAttribute('transform', `rotate(${angle})`);
+    const scale = state.playing ? (0.85 + beat * 0.35) : 1;
+    pulseG.setAttribute('transform', `scale(${scale})`);
+    halo.setAttribute('r', state.playing ? (22 + beat * 14) : 26);
+    halo.setAttribute('opacity', state.playing ? (0.55 + beat * 0.35) : 0.6);
+    sun.setAttribute('r', state.playing ? (10 + beat * 2.2) : 11);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ---------------- Volume slider (rainbow) ---------------- */
+(function volume(){
+  const group = document.getElementById('volumeGroup');
+  const knob  = document.getElementById('volKnob');
+  const dim   = document.getElementById('volDim');
+  const svg   = document.querySelector('#player svg');
+  const X0 = 168, X1 = 218;
+
+  let dragging = false;
+
+  function render(){
+    const x = X0 + state.volume * (X1 - X0);
+    knob.setAttribute('cx', x);
+    dim.setAttribute('x', x);
+    dim.setAttribute('width', Math.max(0, X1 - x));
+  }
+  function setFromEvent(e){
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    state.volume = Math.max(0, Math.min(1, (loc.x - X0) / (X1 - X0)));
+    render();
+  }
+  group.addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    dragging = true;
+    group.setPointerCapture(e.pointerId);
+    setFromEvent(e);
+  });
+  group.addEventListener('pointermove', e => { if (dragging) setFromEvent(e); });
+  const end = () => { dragging = false; };
+  group.addEventListener('pointerup', end);
+  group.addEventListener('pointercancel', end);
+  render();
+})();
+
+/* ---------------- Progress bar (draggable scrub) ---------------- */
+(function progress(){
+  const group = document.getElementById('progressGroup');
+  const svg   = document.querySelector('#player svg');
+  const X0 = 148, X1 = 238;
+
+  let dragging = false;
+
+  function setFromEvent(e){
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const pct = Math.max(0, Math.min(1, (loc.x - X0) / (X1 - X0)));
+    state.elapsed = pct * state.duration;
+    window.__renderPlayer && window.__renderPlayer();
+  }
+  group.addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    dragging = true;
+    group.setPointerCapture(e.pointerId);
+    setFromEvent(e);
+  });
+  group.addEventListener('pointermove', e => { if (dragging) setFromEvent(e); });
+  const end = () => { dragging = false; };
+  group.addEventListener('pointerup', end);
+  group.addEventListener('pointercancel', end);
+})();
+
+/* ---------------- Controls + display ---------------- */
+(function controls(){
+  const titleEl   = document.getElementById('titleText');
+  const artistEl  = document.getElementById('artistText');
+  const elapsedEl = document.getElementById('elapsedText');
+  const remainEl  = document.getElementById('remainText');
+  const fill      = document.getElementById('progressFill');
+  const knob      = document.getElementById('seekerKnob');
+  const sunGroup  = document.getElementById('sunGroup');
+
+  function fmt(s){
+    s = Math.max(0, Math.floor(s));
+    const m = Math.floor(s/60), sec = s%60;
+    return m + ':' + String(sec).padStart(2,'0');
+  }
+  function render(){
+    titleEl.textContent  = state.title;
+    artistEl.textContent = state.artist;
+    elapsedEl.textContent = fmt(state.elapsed);
+    remainEl.textContent  = '-' + fmt(state.duration - state.elapsed);
+    const pct = state.duration ? state.elapsed / state.duration : 0;
+    const x = 148 + pct * 90;
+    fill.setAttribute('width', pct * 90);
+    knob.setAttribute('points', `${x},185 ${x+3},182 ${x-3},182`);
+
+    sunGroup.style.display = state.sunVisible ? '' : 'none';
+  }
+  window.__renderPlayer = render;
+  render();
+
+  setInterval(() => {
+    if (state.playing){
+      state.elapsed = Math.min(state.duration, state.elapsed + 1);
+      if (state.elapsed >= state.duration) state.playing = false;
+      render();
+    }
+  }, 1000);
+
+  document.querySelectorAll('.btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const a = b.dataset.action;
+      switch(a){
+        case 'play':    state.playing = !state.playing; break;
+        case 'stop':    state.sunVisible = !state.sunVisible; break;
+        case 'next':    state.elapsed = 0; break;
+        case 'rewind':  state.elapsed = Math.max(0, state.elapsed - 10); break;
+        case 'forward': state.elapsed = Math.min(state.duration, state.elapsed + 10); break;
+      }
+      render();
+    });
+  });
+})();
+
+
 </script>
-
 </body>
 </html>
