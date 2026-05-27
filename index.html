@@ -4,69 +4,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cloud MP3 Player</title>
+<title>Realistic MP3 Widget</title>
 
 <style>
 *{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
 body{
-  width:100vw;
-  height:100vh;
-  overflow:hidden;
-  background:transparent;
-  font-family:Arial, sans-serif;
+    background:transparent;
+    overflow:hidden;
+    width:100vw;
+    height:100vh;
 }
 
 #player{
-  position:fixed;
-  width:480px;
-  left:40px;
-  top:40px;
-  cursor:grab;
-  user-select:none;
-  z-index:9999;
-  filter:drop-shadow(0 30px 35px rgba(0,0,0,0.35));
+    position:fixed;
+    left:40px;
+    top:40px;
+    width:640px;
+    user-select:none;
+    cursor:grab;
+    z-index:9999;
 }
 
 #player.dragging{
-  cursor:grabbing;
+    cursor:grabbing;
 }
 
 svg{
-  width:100%;
-  height:auto;
-  overflow:visible;
+    width:100%;
+    height:auto;
+    overflow:visible;
 }
 
 .btn{
-  cursor:pointer;
-  transition:transform .12s ease, filter .12s ease;
-}
-
-.btn:hover{
-  filter:brightness(1.06);
+    cursor:pointer;
+    transition:transform .08s ease;
 }
 
 .btn:active{
-  transform:translateY(2px) scale(0.97);
+    transform:translateY(2px);
 }
 
-.screen-text{
-  font-family:'Courier New', monospace;
-  fill:white;
-  letter-spacing:1px;
-}
-
-#progressFill{
-  transition:width .15s linear;
-}
-
-#volumeFill{
-  transition:width .15s linear;
+.screenText{
+    fill:white;
+    font-family:Arial, sans-serif;
+    font-size:22px;
+    letter-spacing:2px;
 }
 
 </style>
@@ -75,521 +62,142 @@ svg{
 
 <div id="player">
 
-<svg viewBox="0 0 900 650">
+<svg viewBox="0 0 1000 700">
 
 <defs>
 
-<linearGradient id="pinkOuter" x1="0" y1="0" x2="1" y2="1">
-  <stop offset="0%" stop-color="#ff8ed8"/>
-  <stop offset="45%" stop-color="#ff5ebd"/>
-  <stop offset="100%" stop-color="#d92d8d"/>
+<linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#d07ab3"/>
+<stop offset="55%" stop-color="#c65fa6"/>
+<stop offset="100%" stop-color="#a74684"/>
 </linearGradient>
 
-<linearGradient id="pinkInner" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="#ffc1ea"/>
-  <stop offset="100%" stop-color="#ff5dbd"/>
+<linearGradient id="bodyShadow" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#6f2956"/>
+<stop offset="100%" stop-color="#522041"/>
 </linearGradient>
 
-<linearGradient id="cloudBlue" x1="0" y1="0" x2="1" y2="1">
-  <stop offset="0%" stop-color="#dff4ff"/>
-  <stop offset="45%" stop-color="#b6dcff"/>
-  <stop offset="100%" stop-color="#8fc2f0"/>
+<linearGradient id="innerRing" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#ff7ebf"/>
+<stop offset="100%" stop-color="#d63f86"/>
 </linearGradient>
 
-<linearGradient id="cloudShadow" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="#75a8d9"/>
-  <stop offset="100%" stop-color="#4f7ba7"/>
+<linearGradient id="goldBtn" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#f7ef9a"/>
+<stop offset="50%" stop-color="#d9c95f"/>
+<stop offset="100%" stop-color="#a59034"/>
 </linearGradient>
 
-<linearGradient id="cloudGloss" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="rgba(255,255,255,.95)"/>
-  <stop offset="45%" stop-color="rgba(255,255,255,.2)"/>
-  <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+<linearGradient id="goldShadow" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#7b6820"/>
+<stop offset="100%" stop-color="#52420f"/>
 </linearGradient>
 
-<radialGradient id="sunCore" cx="50%" cy="50%" r="60%">
-  <stop offset="0%" stop-color="#fff8be"/>
-  <stop offset="35%" stop-color="#ffd54d"/>
-  <stop offset="75%" stop-color="#ff9b00"/>
-  <stop offset="100%" stop-color="#ff7200"/>
+<radialGradient id="sunGrad" cx="50%" cy="50%" r="60%">
+<stop offset="0%" stop-color="#fff8c8"/>
+<stop offset="40%" stop-color="#ffd24d"/>
+<stop offset="100%" stop-color="#ff8c00"/>
 </radialGradient>
 
-<radialGradient id="sunGlow" cx="50%" cy="50%" r="70%">
-  <stop offset="0%" stop-color="rgba(255,220,100,.9)"/>
-  <stop offset="100%" stop-color="rgba(255,120,0,0)"/>
+<radialGradient id="sunGlow" cx="50%" cy="50%" r="80%">
+<stop offset="0%" stop-color="rgba(255,200,70,.8)"/>
+<stop offset="100%" stop-color="rgba(255,120,0,0)"/>
 </radialGradient>
 
-<linearGradient id="buttonPink" x1="0" y1="0" x2="1" y2="1">
-  <stop offset="0%" stop-color="#ffe0fa"/>
-  <stop offset="100%" stop-color="#ff9fe4"/>
-</linearGradient>
+<filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+<feDropShadow dx="0" dy="15" stdDeviation="15" flood-color="#000" flood-opacity="0.35"/>
+</filter>
 
-<linearGradient id="buttonBlue" x1="0" y1="0" x2="1" y2="1">
-  <stop offset="0%" stop-color="#dff3ff"/>
-  <stop offset="100%" stop-color="#87c2f6"/>
-</linearGradient>
-
-<filter id="softShadow" x="-100%" y="-100%" width="300%" height="300%">
-  <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.25"/>
+<filter id="btnShadow" x="-50%" y="-50%" width="200%" height="200%">
+<feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#594513" flood-opacity="0.5"/>
 </filter>
 
 <filter id="sunBlur" x="-100%" y="-100%" width="300%" height="300%">
-  <feGaussianBlur stdDeviation="14"/>
+<feGaussianBlur stdDeviation="15"/>
 </filter>
 
 </defs>
 
-<!-- OUTER BODY -->
+<!-- MAIN BODY SHADOW -->
 <path
- d="
- M120 100
- C200 40 380 40 500 90
- C620 10 820 120 800 280
- C880 370 820 540 630 550
- C500 620 220 620 110 520
- C0 430 0 200 120 100
- "
- fill="url(#pinkOuter)"
- stroke="#ffb7e8"
- stroke-width="12"
+ d="M55 530
+ C70 620 170 655 285 640
+ C500 610 610 610 760 655
+ C890 685 985 625 990 505
+ C995 385 935 230 850 120
+ C745 -10 535 10 420 100
+ C340 160 230 165 135 185
+ C35 210 0 325 15 455
+ C20 500 35 520 55 530Z"
+ fill="url(#bodyShadow)"
+ opacity="0.9"
+/>
+
+<!-- MAIN BODY -->
+<path
+ d="M45 495
+ C60 585 165 615 285 602
+ C500 578 620 578 765 618
+ C885 650 965 600 970 485
+ C975 365 920 225 840 125
+ C740 0 545 18 435 103
+ C350 170 235 170 145 188
+ C50 208 15 312 28 425
+ C32 470 35 485 45 495Z"
+ fill="url(#bodyGrad)"
  filter="url(#softShadow)"
 />
 
-<!-- METAL DOTS -->
-<g fill="#d7dbe2" stroke="#8d93a1" stroke-width="4">
-  <ellipse cx="130" cy="135" rx="18" ry="10"/>
-  <ellipse cx="220" cy="95" rx="18" ry="10"/>
-  <ellipse cx="350" cy="75" rx="18" ry="10"/>
-  <ellipse cx="490" cy="75" rx="18" ry="10"/>
-  <ellipse cx="640" cy="95" rx="18" ry="10"/>
-  <ellipse cx="740" cy="150" rx="18" ry="10"/>
-  <ellipse cx="790" cy="260" rx="18" ry="10"/>
-  <ellipse cx="770" cy="420" rx="18" ry="10"/>
-  <ellipse cx="690" cy="520" rx="18" ry="10"/>
-  <ellipse cx="520" cy="570" rx="18" ry="10"/>
-  <ellipse cx="300" cy="570" rx="18" ry="10"/>
-  <ellipse cx="120" cy="510" rx="18" ry="10"/>
-  <ellipse cx="70" cy="360" rx="18" ry="10"/>
-  <ellipse cx="80" cy="220" rx="18" ry="10"/>
-</g>
-
-<!-- BLACK SCREEN -->
+<!-- TOP GLOSS -->
 <path
- d="
- M420 70
- C610 20 770 130 740 280
- C720 370 610 410 450 390
- C340 370 270 340 250 270
- C210 150 300 100 420 70
- "
- fill="#000"
-/>
-
-<!-- SUN GLOW -->
-<circle cx="585" cy="195" r="120" fill="url(#sunGlow)" opacity="0.8" filter="url(#sunBlur)"/>
-
-<!-- SUN -->
-<g id="sunGroup">
-
-<g id="sunRays" transform="translate(585 195)">
-
-<path d="M0 -110 C12 -95 15 -78 0 -62 C-15 -78 -12 -95 0 -110Z" fill="#ffbe00"/>
-<path d="M75 -80 C85 -65 85 -48 70 -40 C62 -55 63 -68 75 -80Z" fill="#ffbe00"/>
-<path d="M110 0 C95 12 78 15 62 0 C78 -15 95 -12 110 0Z" fill="#ffbe00"/>
-<path d="M75 80 C65 85 48 85 40 70 C55 62 68 63 75 80Z" fill="#ffbe00"/>
-<path d="M0 110 C-12 95 -15 78 0 62 C15 78 12 95 0 110Z" fill="#ffbe00"/>
-<path d="M-75 80 C-85 65 -85 48 -70 40 C-62 55 -63 68 -75 80Z" fill="#ffbe00"/>
-<path d="M-110 0 C-95 -12 -78 -15 -62 0 C-78 15 -95 12 -110 0Z" fill="#ffbe00"/>
-<path d="M-75 -80 C-65 -85 -48 -85 -40 -70 C-55 -62 -68 -63 -75 -80Z" fill="#ffbe00"/>
-
-</g>
-
-<circle
- cx="585"
- cy="195"
- r="72"
- fill="url(#sunCore)"
- stroke="#ff9800"
- stroke-width="8"
-/>
-
-<path
- d="
- M585 145
- C620 145 640 165 640 190
- C640 225 610 245 580 245
- C545 245 525 220 525 190
- C525 155 555 130 595 130
- "
+ d="M80 250
+ C220 150 420 170 560 175
+ C760 185 885 250 930 350"
  fill="none"
- stroke="#ff9200"
- stroke-width="8"
+ stroke="rgba(255,255,255,.18)"
+ stroke-width="22"
  stroke-linecap="round"
 />
 
-</g>
-
-<!-- CLOUD -->
-<g filter="url(#softShadow)">
-
+<!-- SCREEN RING -->
 <path
- d="
- M120 390
- C160 290 290 280 360 330
- C390 240 520 230 590 310
- C680 250 790 330 790 430
- C850 450 860 560 720 570
- L190 570
- C50 570 20 450 120 390
- "
- fill="url(#cloudBlue)"
- stroke="#72a7d6"
- stroke-width="8"
+ d="M395 65
+ C585 -15 860 65 920 235
+ C955 335 930 395 900 420
+ C850 455 710 455 575 425
+ C455 395 390 350 378 300
+ C350 200 330 120 395 65Z"
+ fill="url(#innerRing)"
 />
 
+<!-- SCREEN INNER -->
 <path
- d="
- M140 405
- C180 330 290 330 350 360
- C390 280 510 280 575 345
- C665 295 755 355 760 430
- C805 450 795 530 690 535
- L210 535
- C100 535 80 450 140 405
- "
- fill="url(#cloudGloss)"
- opacity="0.7"
+ d="M415 95
+ C585 30 825 90 875 240
+ C900 315 885 360 860 380
+ C815 410 705 410 595 385
+ C495 360 440 325 430 285
+ C405 210 390 145 415 95Z"
+ fill="#111"
 />
 
-<path
- d="
- M180 520
- C300 555 580 555 700 520
- "
- fill="none"
- stroke="url(#cloudShadow)"
- stroke-width="14"
- stroke-linecap="round"
- opacity="0.35"
-/>
-
-</g>
-
-<!-- SCREEN TEXT -->
-<text x="185" y="290" class="screen-text" font-size="38">
-LAUL - LAULJA
-</text>
-
-<text id="currentTime" x="120" y="360" class="screen-text" font-size="28">
-0:00
-</text>
-
-<text id="duration" x="650" y="360" class="screen-text" font-size="28">
--2:11
-</text>
-
-<!-- PROGRESS BAR -->
-<rect x="190" y="345" width="420" height="8" rx="10" fill="#ff8b2d" opacity="0.3"/>
-
-<rect id="progressFill" x="190" y="345" width="150" height="8" rx="10" fill="#ff8b2d"/>
-
-<circle id="progressKnob" cx="340" cy="349" r="12" fill="#ffc53a" stroke="#ff7b00" stroke-width="4"/>
-
-<!-- LEFT BIG STAR BUTTON -->
-<g class="btn" id="starBtn">
-<circle cx="140" cy="430" r="58" fill="url(#buttonBlue)" stroke="#5ea0d8" stroke-width="6"/>
-<path d="M140 398 L148 420 L172 420 L152 434 L160 456 L140 442 L120 456 L128 434 L108 420 L132 420 Z" fill="#ffd539" stroke="#ffb000" stroke-width="4"/>
-</g>
-
-<!-- HEART BUTTON -->
-<g class="btn">
-<circle cx="450" cy="390" r="38" fill="url(#buttonBlue)" stroke="#5ea0d8" stroke-width="5"/>
-<path d="M450 410
-C430 395 425 380 438 370
-C446 364 454 368 450 376
-C456 366 466 364 474 370
-C487 380 480 396 450 410Z"
-fill="#ff2e43"/>
-</g>
-
-<!-- RIGHT HEART -->
-<g class="btn">
-<circle cx="760" cy="500" r="38" fill="url(#buttonBlue)" stroke="#5ea0d8" stroke-width="5"/>
-<path d="M760 520
-C740 505 735 490 748 480
-C756 474 764 478 760 486
-C766 476 776 474 784 480
-C797 490 790 506 760 520Z"
-fill="#ff2e43"/>
-</g>
-
-<!-- MAIN CONTROL FLOWER -->
-<g id="controls">
-
-<!-- UP -->
-<g class="btn" id="prevBtn">
-<path d="M530 350
-Q585 300 640 350
-Q585 400 530 350"
-fill="url(#buttonPink)"
-stroke="#ff72c8"
-stroke-width="6"/>
-<text x="585" y="360" text-anchor="middle" font-size="50" fill="#ff4eb2">⏮</text>
-</g>
-
-<!-- LEFT -->
-<g class="btn" id="backBtn">
-<path d="M480 400
-Q430 455 480 510
-Q540 455 480 400"
-fill="url(#buttonPink)"
-stroke="#ff72c8"
-stroke-width="6"/>
-<text x="485" y="470" text-anchor="middle" font-size="50" fill="#ff4eb2">⏪</text>
-</g>
-
-<!-- RIGHT -->
-<g class="btn" id="nextBtn">
-<path d="M690 400
-Q740 455 690 510
-Q630 455 690 400"
-fill="url(#buttonPink)"
-stroke="#ff72c8"
-stroke-width="6"/>
-<text x="685" y="470" text-anchor="middle" font-size="50" fill="#ff4eb2">⏩</text>
-</g>
-
-<!-- DOWN -->
-<g class="btn" id="stopBtn">
-<path d="M530 560
-Q585 615 640 560
-Q585 510 530 560"
-fill="url(#buttonPink)"
-stroke="#ff72c8"
-stroke-width="6"/>
-<rect x="565" y="545" width="40" height="40" rx="6" fill="#ff4eb2"/>
-</g>
-
-<!-- CENTER -->
-<g class="btn" id="playBtn">
-<circle cx="585" cy="455" r="55" fill="#ffffff" stroke="#ff9d2e" stroke-width="7"/>
-
-<g id="playIcon">
-<polygon points="570,425 570,485 620,455" fill="#ff8a00"/>
-</g>
-
-<g id="pauseIcon" style="display:none">
-<rect x="560" y="425" width="18" height="60" rx="4" fill="#ff8a00"/>
-<rect x="592" y="425" width="18" height="60" rx="4" fill="#ff8a00"/>
-</g>
-
-</g>
-
-</g>
-
-<!-- RAINBOW VOLUME -->
+<!-- TRANSPARENT SUN AREA -->
 <g>
 
-<path d="M220 510 A90 90 0 0 1 370 510" stroke="#ff3737" stroke-width="14" fill="none" stroke-linecap="round"/>
-<path d="M228 510 A82 82 0 0 1 362 510" stroke="#ff9f1c" stroke-width="14" fill="none" stroke-linecap="round"/>
-<path d="M236 510 A74 74 0 0 1 354 510" stroke="#ffe44d" stroke-width="14" fill="none" stroke-linecap="round"/>
-<path d="M244 510 A66 66 0 0 1 346 510" stroke="#45d96f" stroke-width="14" fill="none" stroke-linecap="round"/>
-<path d="M252 510 A58 58 0 0 1 338 510" stroke="#4fb6ff" stroke-width="14" fill="none" stroke-linecap="round"/>
-<path d="M260 510 A50 50 0 0 1 330 510" stroke="#7756ff" stroke-width="14" fill="none" stroke-linecap="round"/>
+<circle cx="700" cy="225" r="90" fill="url(#sunGlow)" filter="url(#sunBlur)" opacity="0.8"/>
 
-<circle id="volumeKnob" cx="230" cy="465" r="16" fill="#74bfff" stroke="#2c82d0" stroke-width="5"/>
-
+<g id="sunRays" transform="translate(700 225)">
+<path d="M0 -85 C10 -70 12 -55 0 -42 C-12 -55 -10 -70 0 -85Z" fill="#ffb000"/>
+<path d="M60 -60 C70 -50 70 -35 55 -28 C47 -40 49 -50 60 -60Z" fill="#ffb000"/>
+<path d="M85 0 C70 10 55 12 42 0 C55 -12 70 -10 85 0Z" fill="#ffb000"/>
+<path d="M60 60 C50 70 35 70 28 55 C40 47 50 49 60 60Z" fill="#ffb000"/>
+<path d="M0 85 C-10 70 -12 55 0 42 C12 55 10 70 0 85Z" fill="#ffb000"/>
+<path d="M-60 60 C-70 50 -70 35 -55 28 C-47 40 -49 50 -60 60Z" fill="#ffb000"/>
+<path d="M-85 0 C-70 -10 -55 -12 -42 0 C-55 12 -70 10 -85 0Z" fill="#ffb000"/>
+<path d="M-60 -60 C-50 -70 -35 -70 -28 -55 C-40 -47 -50 -49 -60 -60Z" fill="#ffb000"/>
 </g>
 
-</svg>
+<circle cx="700" cy="225" r="55" fill="url(#sunGrad)"/>
 
-<audio id="audio"></audio>
-
-</div>
-
-<script>
-
-const player = document.getElementById('player');
-
-let dragging = false;
-let offsetX = 0;
-let offsetY = 0;
-
-player.addEventListener('mousedown', (e)=>{
-
-  if(e.target.closest('.btn')) return;
-
-  dragging = true;
-  player.classList.add('dragging');
-
-  offsetX = e.clientX - player.offsetLeft;
-  offsetY = e.clientY - player.offsetTop;
-
-});
-
-window.addEventListener('mousemove', (e)=>{
-
-  if(!dragging) return;
-
-  player.style.left = (e.clientX - offsetX) + 'px';
-  player.style.top = (e.clientY - offsetY) + 'px';
-
-});
-
-window.addEventListener('mouseup', ()=>{
-  dragging = false;
-  player.classList.remove('dragging');
-});
-
-
-const sunRays = document.getElementById('sunRays');
-let rotation = 0;
-
-function animateSun(){
-
-  rotation += 0.08;
-
-  sunRays.setAttribute(
-    'transform',
-    `translate(585 195) rotate(${rotation})`
-  );
-
-  requestAnimationFrame(animateSun);
-}
-
-animateSun();
-
-
-const audio = document.getElementById('audio');
-const playBtn = document.getElementById('playBtn');
-const playIcon = document.getElementById('playIcon');
-const pauseIcon = document.getElementById('pauseIcon');
-const progressFill = document.getElementById('progressFill');
-const progressKnob = document.getElementById('progressKnob');
-const currentTimeText = document.getElementById('currentTime');
-const durationText = document.getElementById('duration');
-
-let isPlaying = false;
-
-// ADD YOUR SONG HERE
-// audio.src = 'song.mp3';
-
-playBtn.addEventListener('click', ()=>{
-
-  if(!audio.src){
-    alert('Add your mp3 file in code first');
-    return;
-  }
-
-  if(isPlaying){
-    audio.pause();
-
-    playIcon.style.display = 'block';
-    pauseIcon.style.display = 'none';
-
-  }else{
-    audio.play();
-
-    playIcon.style.display = 'none';
-    pauseIcon.style.display = 'block';
-  }
-
-  isPlaying = !isPlaying;
-
-});
-
-
-audio.addEventListener('timeupdate', ()=>{
-
-  if(!audio.duration) return;
-
-  const progress = audio.currentTime / audio.duration;
-
-  const width = 420 * progress;
-
-  progressFill.setAttribute('width', width);
-  progressKnob.setAttribute('cx', 190 + width);
-
-  currentTimeText.textContent = formatTime(audio.currentTime);
-  durationText.textContent = '-' + formatTime(audio.duration - audio.currentTime);
-
-});
-
-
-function formatTime(seconds){
-
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-
-  return mins + ':' + String(secs).padStart(2,'0');
-}
-
-
-document.getElementById('backBtn').addEventListener('click', ()=>{
-  audio.currentTime -= 10;
-});
-
-
-document.getElementById('nextBtn').addEventListener('click', ()=>{
-  audio.currentTime += 10;
-});
-
-
-document.getElementById('stopBtn').addEventListener('click', ()=>{
-
-  audio.pause();
-  audio.currentTime = 0;
-
-  isPlaying = false;
-
-  playIcon.style.display = 'block';
-  pauseIcon.style.display = 'none';
-
-});
-
-
-const volumeKnob = document.getElementById('volumeKnob');
-
-let volumeDragging = false;
-
-volumeKnob.addEventListener('mousedown', ()=>{
-  volumeDragging = true;
-});
-
-window.addEventListener('mouseup', ()=>{
-  volumeDragging = false;
-});
-
-window.addEventListener('mousemove', (e)=>{
-
-  if(!volumeDragging) return;
-
-  const rect = player.getBoundingClientRect();
-
-  let x = e.clientX - rect.left;
-
-  x = Math.max(220, Math.min(370, x));
-
-  const percent = (x - 220) / 150;
-
-  audio.volume = percent;
-
-  const angle = -55 + percent * 110;
-
-  const radians = angle * Math.PI / 180;
-
-  const radius = 90;
-
-  const cx = 295 + Math.cos(radians) * radius;
-  const cy = 510 + Math.sin(radians) * radius;
-
-  volumeKnob.setAttribute('cx', cx);
-  volumeKnob.setAttribute('cy', cy);
-
-});
-
-</script>
-
-</body>
-</html>
+</g>
 ```
