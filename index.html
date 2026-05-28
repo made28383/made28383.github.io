@@ -16,9 +16,12 @@
     cursor: grab;
     user-select: none;
     filter: drop-shadow(0 22px 26px rgba(0,0,0,.6)) drop-shadow(0 4px 6px rgba(0,0,0,.4));
-
     touch-action: none;
     z-index: 9999;
+    --beat-scale: 1;
+    transform: scale(var(--beat-scale));
+    transition: transform 80ms ease-out;
+    transform-origin: center center;
   }
   #player.dragging { cursor: grabbing; }
   #player svg { width: 100%; height: 100%; display: block; overflow: visible; }
@@ -42,6 +45,7 @@
 <body>
 <canvas id="trail"></canvas>
 <div class="page-hint">Lohista mängijat hiirega ✦ Vajuta nuppe ✦ Vikerkaaresädelus järgneb sulle</div>
+<audio id="audio" preload="metadata"></audio>
 
 
 <div id="player">
@@ -647,44 +651,112 @@ const trail = (function(){
   parent.appendChild(deco);
 })();
 
+/* ---------------- Playlist + audio ---------------- */
+const playlist = [
+  { title: '\u266A Beat It \u266A',  artist: '— MICHAEL JACKSON —', src: 'songs/beat-it.mp3' },
+  { title: '\u266A Stateside \u266A', artist: '— PINKPANTHERESS & ZARA LARSSON —', src: 'songs/stateside.mp3' },
+];
+const audio = document.getElementById('audio');
+let trackIndex = 0;
+
 /* ---------------- State ---------------- */
 const state = {
   playing:  false,
   sunVisible: true,
-  duration: 213,
+  duration: 0,
   elapsed:  0,
   volume:   0.5,
-  artist:   '— TUNDMATU ESITAJA —',
-  title:    '\u266A Lugu pole valitud \u266A',
+  artist:   playlist[0].artist,
+  title:    playlist[0].title,
 };
 
-/* ---------------- Sun animation (freezes on pause) ---------------- */
+function loadTrack(i, autoplay){
+  trackIndex = (i + playlist.length) % playlist.length;
+  const t = playlist[trackIndex];
+  audio.src = t.src;
+  state.title = t.title;
+  state.artist = t.artist;
+  state.elapsed = 0;
+  state.duration = 0;
+  if (autoplay){
+    audio.play().then(() => { state.playing = true; window.__renderPlayer && window.__renderPlayer(); })
+                .catch(() => {});
+  }
+  window.__renderPlayer && window.__renderPlayer();
+}
+audio.addEventListener('loadedmetadata', () => {
+  state.duration = audio.duration || 0;
+  window.__renderPlayer && window.__renderPlayer();
+});
+audio.addEventListener('timeupdate', () => {
+  state.elapsed = audio.currentTime;
+  window.__renderPlayer && window.__renderPlayer();
+});
+audio.addEventListener('ended', () => { loadTrack(trackIndex + 1, true); });
+audio.volume = 0.5;
+
+/* ---------------- Web Audio analyser (real beat detection) ---------------- */
+let audioCtx = null, analyser = null, freqData = null;
+function ensureAudioGraph(){
+  if (audioCtx) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AC();
+    const src = audioCtx.createMediaElementSource(audio);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.7;
+    freqData = new Uint8Array(analyser.frequencyBinCount);
+    src.connect(analyser);
+    analyser.connect(audioCtx.destination);
+  } catch(e){ console.warn('Web Audio failed', e); }
+}
+
+/* ---------------- Sun + player bounce (in rhythm with music) ---------------- */
 (function animate(){
   const rotateG = document.getElementById('raysRotate');
   const pulseG  = document.getElementById('raysPulse');
   const halo    = document.getElementById('sunHalo');
   const sun     = document.getElementById('sunBody');
+  const playerEl = document.getElementById('player');
 
-  // accumulators that only advance while playing → freeze on pause
   let lastNow = performance.now();
-  let phase = 0;    // beat phase
-  let angle = 0;    // rotation degrees
+  let angle = 0;
+  let smoothBeat = 0;
+  let fallbackPhase = 0;
 
   function frame(now){
     const dt = (now - lastNow) / 1000;
     lastNow = now;
+
+    let beat = 0;
     if (state.playing){
-      const bpm = 120;
-      phase += dt * (bpm/60) * Math.PI;
+      if (analyser){
+        analyser.getByteFrequencyData(freqData);
+        // low-frequency energy (bass) = first ~8 bins
+        let sum = 0;
+        for (let i = 0; i < 8; i++) sum += freqData[i];
+        beat = (sum / 8) / 255; // 0..1
+      } else {
+        fallbackPhase += dt * (120/60) * Math.PI;
+        beat = (Math.sin(fallbackPhase) + 1) / 2;
+      }
       angle = (angle + dt * 30) % 360;
     }
-    const beat = (Math.sin(phase) + 1) / 2;
+    // smooth + slight decay
+    smoothBeat += (beat - smoothBeat) * 0.35;
+
     rotateG.setAttribute('transform', `rotate(${angle})`);
-    const scale = state.playing ? (0.85 + beat * 0.35) : 1;
+    const scale = state.playing ? (0.85 + smoothBeat * 0.5) : 1;
     pulseG.setAttribute('transform', `scale(${scale})`);
-    halo.setAttribute('r', state.playing ? (22 + beat * 14) : 26);
-    halo.setAttribute('opacity', state.playing ? (0.55 + beat * 0.35) : 0.6);
-    sun.setAttribute('r', state.playing ? (10 + beat * 2.2) : 11);
+    halo.setAttribute('r', state.playing ? (22 + smoothBeat * 18) : 26);
+    halo.setAttribute('opacity', state.playing ? (0.55 + smoothBeat * 0.4) : 0.6);
+    sun.setAttribute('r', state.playing ? (10 + smoothBeat * 3) : 11);
+
+    // bounce whole player widget in rhythm
+    const pop = state.playing ? (1 + smoothBeat * 0.08) : 1;
+    playerEl.style.setProperty('--beat-scale', pop);
+
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -705,6 +777,7 @@ const state = {
     knob.setAttribute('cx', x);
     dim.setAttribute('x', x);
     dim.setAttribute('width', Math.max(0, X1 - x));
+    audio.volume = state.volume;
   }
   function setFromEvent(e){
     const pt = svg.createSVGPoint();
@@ -739,7 +812,8 @@ const state = {
     pt.x = e.clientX; pt.y = e.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
     const pct = Math.max(0, Math.min(1, (loc.x - X0) / (X1 - X0)));
-    state.elapsed = pct * state.duration;
+    state.elapsed = pct * (state.duration || 0);
+    if (isFinite(audio.duration)) audio.currentTime = state.elapsed;
     window.__renderPlayer && window.__renderPlayer();
   }
   group.addEventListener('pointerdown', e => {
@@ -782,25 +856,33 @@ const state = {
     sunGroup.style.display = state.sunVisible ? '' : 'none';
   }
   window.__renderPlayer = render;
+  loadTrack(0, false);
   render();
-
-  setInterval(() => {
-    if (state.playing){
-      state.elapsed = Math.min(state.duration, state.elapsed + 1);
-      if (state.elapsed >= state.duration) state.playing = false;
-      render();
-    }
-  }, 1000);
 
   document.querySelectorAll('.btn').forEach(b => {
     b.addEventListener('click', () => {
       const a = b.dataset.action;
       switch(a){
-        case 'play':    state.playing = !state.playing; break;
-        case 'stop':    state.sunVisible = !state.sunVisible; break;
-        case 'next':    state.elapsed = 0; break;
-        case 'rewind':  state.elapsed = Math.max(0, state.elapsed - 10); break;
-        case 'forward': state.elapsed = Math.min(state.duration, state.elapsed + 10); break;
+        case 'play':
+          ensureAudioGraph();
+          if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+          if (audio.paused){ audio.play().then(()=>{ state.playing = true; render(); }).catch(()=>{}); }
+          else { audio.pause(); state.playing = false; }
+          break;
+        case 'stop':
+          audio.pause(); audio.currentTime = 0;
+          state.playing = false; state.elapsed = 0;
+          state.sunVisible = !state.sunVisible;
+          break;
+        case 'next':
+          loadTrack(trackIndex + 1, state.playing || !audio.paused);
+          break;
+        case 'rewind':
+          audio.currentTime = Math.max(0, audio.currentTime - 10);
+          break;
+        case 'forward':
+          if (isFinite(audio.duration)) audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+          break;
       }
       render();
     });
