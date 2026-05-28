@@ -4,50 +4,77 @@
 <meta charset="UTF-8">
 <title>Pink MP3 Player Widget</title>
 <style>
-  html, body { margin: 0; padding: 0; min-height: 100vh; background: #1a1a22;
+  html, body { margin: 0; padding: 0; min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 30%, #2a1d36 0%, #110813 75%);
     font-family: system-ui, sans-serif; color: #eee; overflow: hidden; }
-  .page-hint { position: fixed; top: 20px; left: 20px; opacity: .5; font-size: 13px; }
+  .page-hint { position: fixed; top: 20px; left: 20px; opacity: .55; font-size: 13px; z-index: 10000; }
+
+  /* 3D stage */
+  #stage {
+    position: fixed; inset: 0;
+    perspective: 1400px;
+    perspective-origin: 50% 38%;
+  }
 
   #player {
-    position: fixed;
+    position: absolute;
     top: 80px; left: 80px;
-    width: 360px;
-    height: 360px;
+    width: 380px;
+    height: 380px;
     cursor: grab;
     user-select: none;
-    filter: drop-shadow(0 22px 26px rgba(0,0,0,.6)) drop-shadow(0 4px 6px rgba(0,0,0,.4));
-
+    transform-style: preserve-3d;
+    transform: rotateX(14deg) rotateY(-8deg) translateZ(0);
+    transition: transform .25s ease;
+    filter:
+      drop-shadow(0 30px 30px rgba(0,0,0,.65))
+      drop-shadow(0 10px 14px rgba(0,0,0,.5))
+      drop-shadow(0 2px 2px rgba(255,180,220,.18));
     touch-action: none;
     z-index: 9999;
   }
-  #player.dragging { cursor: grabbing; }
+  #player.dragging { cursor: grabbing; transform: rotateX(10deg) rotateY(-5deg) scale(1.03); }
   #player svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
-  /* Buttons interactive states */
+  /* Buttons */
   .btn { cursor: pointer; transition: transform .08s ease; transform-box: fill-box; transform-origin: center; }
-  .btn:hover { filter: brightness(1.08); }
-  .btn:active { transform: scale(.94); }
+  .btn:hover { filter: brightness(1.12); }
+  .btn:active { transform: scale(.92); }
   .icon { pointer-events: none; }
 
-  /* Screen text */
   .screen-text {
-    font-family: "Courier New", monospace;
-    font-weight: bold;
-    fill: #2a1a2e;
-    text-anchor: middle;
+    font-family: "Courier New", monospace; font-weight: bold;
+    fill: #2a1a2e; text-anchor: middle;
   }
   #trail { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9998; }
+
+  /* floating background flowers/stars */
+  .bg-sparkle {
+    position: fixed; pointer-events: none;
+    z-index: 1; opacity: .55;
+    animation: floaty 9s ease-in-out infinite;
+    font-size: 22px;
+    filter: drop-shadow(0 0 6px rgba(255,180,220,.5));
+  }
+  @keyframes floaty {
+    0%,100% { transform: translateY(0) rotate(0deg); }
+    50%     { transform: translateY(-14px) rotate(8deg); }
+  }
 </style>
 </head>
 <body>
 <canvas id="trail"></canvas>
 <div class="page-hint">Lohista mängijat hiirega ✦ Vajuta nuppe ✦ Vikerkaaresädelus järgneb sulle</div>
 
+<!-- decorative background flowers/stars -->
+<div id="bgDecor"></div>
 
+<audio id="audio" src="song.mp3" preload="auto"></audio>
+
+<div id="stage">
 <div id="player">
 <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Pink body gradient -->
     <radialGradient id="bodyGrad" cx="40%" cy="35%" r="80%">
       <stop offset="0%" stop-color="#ff8fc8"/>
       <stop offset="55%" stop-color="#d94a92"/>
@@ -58,27 +85,19 @@
       <stop offset="50%" stop-color="#ffffff" stop-opacity="0"/>
       <stop offset="100%" stop-color="#000000" stop-opacity=".5"/>
     </linearGradient>
-
-    <!-- Screen edge (inner ring around screen) -->
     <radialGradient id="ringGrad" cx="50%" cy="50%" r="60%">
       <stop offset="0%" stop-color="#ff5a9e"/>
       <stop offset="100%" stop-color="#8a1f55"/>
     </radialGradient>
-
-    <!-- Gold buttons -->
     <radialGradient id="goldGrad" cx="35%" cy="30%" r="80%">
       <stop offset="0%" stop-color="#fff6b0"/>
       <stop offset="55%" stop-color="#d9b94a"/>
       <stop offset="100%" stop-color="#7a5a14"/>
     </radialGradient>
-
-    <!-- Screen LCD -->
     <linearGradient id="screenGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#cfe8b8"/>
       <stop offset="100%" stop-color="#7fa86a"/>
     </linearGradient>
-
-    <!-- Rainbow gradient for volume track -->
     <linearGradient id="rainbowGrad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%"   stop-color="#ff2d55"/>
       <stop offset="17%"  stop-color="#ff8a1f"/>
@@ -88,21 +107,16 @@
       <stop offset="84%"  stop-color="#5e5ce6"/>
       <stop offset="100%" stop-color="#bf5af2"/>
     </linearGradient>
-
-    <!-- Glossy top highlight across the body -->
     <linearGradient id="glossGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%"  stop-color="#ffffff" stop-opacity=".55"/>
       <stop offset="55%" stop-color="#ffffff" stop-opacity=".05"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
-
-    <!-- Studs around the ring -->
     <radialGradient id="studGrad" cx="35%" cy="30%" r="70%">
       <stop offset="0%" stop-color="#f5f5f5"/>
       <stop offset="60%" stop-color="#888"/>
       <stop offset="100%" stop-color="#222"/>
     </radialGradient>
-
     <filter id="innerShadow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
       <feOffset dx="0" dy="2" result="off"/>
@@ -110,8 +124,6 @@
       <feColorMatrix in="sh" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0" result="csh"/>
       <feComposite in="csh" in2="SourceGraphic" operator="in"/>
     </filter>
-
-    <!-- Strong bevel filter for buttons: highlight + shadow -->
     <filter id="btnShadow" x="-60%" y="-60%" width="220%" height="220%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="1.4" result="blur"/>
       <feOffset in="blur" dx="0" dy="1.6" result="off"/>
@@ -127,28 +139,20 @@
         <feMergeNode in="specClip"/>
       </feMerge>
     </filter>
-
-    <!-- Soft inner shadow inside the window hole -->
     <filter id="windowInner" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
       <feOffset dx="0" dy="2" result="off"/>
       <feComposite in="off" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="sh"/>
       <feColorMatrix in="sh" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .75 0"/>
     </filter>
-
-
-    <!-- Highlight overlay clipped to body -->
     <clipPath id="bodyClip">
       <path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"/>
     </clipPath>
-
-    <!-- Window punch-out mask: white = visible, black = hole -->
     <mask id="windowMask" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="300">
       <rect width="300" height="300" fill="white"/>
       <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
         fill="black"/>
     </mask>
-
     <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#fffbe0"/>
       <stop offset="60%" stop-color="#ffd24a"/>
@@ -158,34 +162,26 @@
       <stop offset="0%" stop-color="#ffe88a" stop-opacity=".85"/>
       <stop offset="100%" stop-color="#ffd24a" stop-opacity="0"/>
     </radialGradient>
-    <!-- Plastic grain noise overlay -->
     <filter id="grain" x="0" y="0" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7" result="n"/>
       <feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .35 0"/>
     </filter>
-
-    <!-- Curved glass reflection over the window -->
     <linearGradient id="glassRefl" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%"  stop-color="#ffffff" stop-opacity=".55"/>
       <stop offset="55%" stop-color="#ffffff" stop-opacity=".08"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
-
-    <!-- Stud highlight gradient (chrome) -->
     <radialGradient id="studHi" cx="35%" cy="25%" r="65%">
       <stop offset="0%"  stop-color="#ffffff"/>
       <stop offset="35%" stop-color="#dcdcdc"/>
       <stop offset="75%" stop-color="#5a5a5a"/>
       <stop offset="100%" stop-color="#101010"/>
     </radialGradient>
-
     <clipPath id="windowClip">
       <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"/>
     </clipPath>
   </defs>
 
-
-  <!-- 1. Sun (drawn first, behind body — visible through the hole) -->
   <g id="sunGroup">
     <circle id="sunHalo" cx="190" cy="117" r="28" fill="url(#sunGlow)"/>
     <g id="rays" transform="translate(190 117)">
@@ -196,12 +192,9 @@
     <circle id="sunBody" cx="190" cy="117" r="12" fill="url(#sunGrad)" stroke="#a85b00" stroke-width=".4"/>
   </g>
 
-  <!-- Hidden path used to position studs around the whole screen edge -->
   <path id="studPath" d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z"
         fill="none" stroke="none"/>
 
-
-  <!-- 2. Main body (with window hole) -->
   <g mask="url(#windowMask)">
     <path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
       fill="url(#bodyGrad)"/>
@@ -214,40 +207,29 @@
       fill="none" stroke="url(#bodyRim)" stroke-width="2"/>
   </g>
 
-  <!-- 3. Inner bezel ring with hole (visible as a frame around the window) -->
   <g mask="url(#windowMask)">
     <path d="M117.82,143.97c-2.21-6.71-6.69-23.68,1.27-40.99,15.61-33.96,63.33-34.94,66.77-34.96,28.68-.18,58.84,14.6,72.69,40.99,3.75,7.15,13.89,26.48,6.34,39.38-12.79,21.86-72.31,18.42-147.06-4.42Z"
       fill="url(#ringGrad)"/>
     <g id="studs"></g>
   </g>
 
-  <!-- 4. Window rim stroke (frames the hole nicely) -->
   <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
         fill="none" stroke="#3a0f24" stroke-width="1.2" opacity=".7"/>
 
-
-
-
-  <!-- Glossy top sheen over the body (adds plastic realism) -->
   <g mask="url(#windowMask)" clip-path="url(#bodyClip)" pointer-events="none">
     <ellipse cx="130" cy="78" rx="125" ry="32" fill="url(#glossGrad)"/>
-    <!-- Lower-left soft secondary sheen -->
     <ellipse cx="80" cy="210" rx="70" ry="14" fill="#ffffff" opacity=".12"/>
-    <!-- Plastic grain noise (very subtle) -->
     <path d="M103.01,218.59c-26.84,2.6-45.87,8.38-62.25-3.34-16.75-11.98-18.98-33.85-19.33-39.75-.97-16.29,4.94-36.59,20.49-47.92,16.31-11.89,28.03-2.84,48.72-13.74,21.04-11.1,17.95-25.23,35.18-39.38,25.96-21.3,75.13-23.84,110.58-1.49,5.77,3.64,37.32,24.42,41.76,62.04,4.52,38.31-21.27,75.49-52.2,89.16-35.72,15.78-49.02-12.74-122.95-5.57Z"
           fill="#000" filter="url(#grain)" opacity=".25"/>
   </g>
 
-  <!-- Soft dark inner shadow inside the window hole -->
   <path d="M122.19,136.72c-3.46-6.12-1.68-13.4,0-20.23,3.4-13.86,12.37-22.19,15.27-24.81,12.96-11.72,28.03-13.44,37.4-14.5,7.61-.87,29.07-3,50,9.92,11.24,6.94,17.6,15.3,20.99,19.85,4.95,6.64,11.38,15.49,12.21,27.86.31,4.66.63,9.47-2.29,13.74-1.18,1.73-5.28,6.86-23.66,8.02-11.13.7-18.88-.6-30.15-2.29-21.22-3.18-7.48-.64-35.88-4.96-34.6-5.27-40.66-6.87-43.89-12.6Z"
         fill="black" opacity=".4" filter="url(#windowInner)" pointer-events="none"/>
 
-  <!-- Curved glass reflection on the window (sun visible through) -->
   <g clip-path="url(#windowClip)" pointer-events="none">
     <path d="M120,90 q60,-30 145,15 q-40,-5 -85,5 q-50,8 -60,-20z" fill="url(#glassRefl)" opacity=".7"/>
   </g>
 
-  <!-- Reusable decorative stickers -->
   <defs>
     <g id="flower">
       <circle cx="0" cy="-4" r="2.6" fill="#fff7fb"/>
@@ -267,31 +249,22 @@
     </g>
   </defs>
 
-
-  <!-- Sticker scatter (kept ON the pink body, off the screen window) -->
   <g mask="url(#windowMask)" clip-path="url(#bodyClip)" pointer-events="none">
-    <!-- Flowers -->
     <use href="#flower" transform="translate(50 135) rotate(-12) scale(1.1)"/>
     <use href="#flower" transform="translate(248 100) rotate(18) scale(1.3)"/>
     <use href="#flower" transform="translate(215 230) rotate(-22) scale(1.15)"/>
     <use href="#flower" transform="translate(145 240) rotate(8) scale(.95)"/>
     <use href="#flower" transform="translate(78 230) rotate(25) scale(1.05)"/>
     <use href="#flower" transform="translate(40 175) rotate(5) scale(.85)"/>
-
-    <!-- Hearts -->
     <use href="#heart" transform="translate(270 125) rotate(15) scale(1.2)"/>
     <use href="#heart" transform="translate(185 245) rotate(-10) scale(1.3)"/>
     <use href="#heart" transform="translate(58 155) rotate(-25) scale(1.0)"/>
     <use href="#heart" transform="translate(118 248) rotate(20) scale(.9)"/>
     <use href="#heart" transform="translate(245 165) rotate(-12) scale(.9)"/>
-
-    <!-- Stars -->
     <use href="#star" transform="translate(265 195) rotate(12) scale(1.05)"/>
     <use href="#star" transform="translate(105 110) rotate(-8) scale(.9)"/>
     <use href="#star" transform="translate(65 198) rotate(18) scale(.85)"/>
     <use href="#star" transform="translate(168 95) rotate(20) scale(.7)"/>
-
-    <!-- Sparkles -->
     <use href="#sparkle" transform="translate(55 118) scale(1.1)"/>
     <use href="#sparkle" transform="translate(195 110) scale(.9)"/>
     <use href="#sparkle" transform="translate(238 205) scale(1.0)"/>
@@ -303,29 +276,19 @@
     <use href="#sparkle" transform="translate(85 165) scale(.8)"/>
     <use href="#sparkle" transform="translate(220 250) scale(.75)"/>
     <use href="#sparkle" transform="translate(258 175) scale(.6)"/>
-
-    <!-- Extra flowers -->
     <use href="#flower" transform="translate(95 215) rotate(-30) scale(.9)"/>
     <use href="#flower" transform="translate(175 215) rotate(15) scale(.8)"/>
     <use href="#flower" transform="translate(280 175) rotate(40) scale(.7)"/>
-
-    <!-- Extra stars -->
     <use href="#star" transform="translate(45 150) rotate(-15) scale(.75)"/>
     <use href="#star" transform="translate(150 215) rotate(28) scale(.65)"/>
     <use href="#star" transform="translate(225 75) rotate(-5) scale(.8)"/>
   </g>
 
-  <!-- Final photographic specular pinpoint (top-left of body) -->
   <g mask="url(#windowMask)" clip-path="url(#bodyClip)" pointer-events="none">
     <ellipse cx="95" cy="75" rx="22" ry="6" fill="#ffffff" opacity=".55"/>
     <ellipse cx="95" cy="75" rx="8" ry="2.2" fill="#ffffff" opacity=".9"/>
   </g>
 
-
-
-
-
-  <!-- Progress bar (draggable scrub) -->
   <g id="progressGroup" style="cursor:pointer">
     <text id="elapsedText" x="145" y="180" font-size="7" fill="#3a0f24"
           text-anchor="end" style="font-family:'Courier New',monospace;font-weight:bold;">0:00</text>
@@ -336,26 +299,18 @@
     <polygon id="seekerKnob" points="148,185 151,182 145,182" fill="#ffe98c" stroke="#5a3a00" stroke-width=".4"/>
   </g>
 
-  <!-- Artist + Title (under progress bar) -->
   <text id="artistText" x="193" y="192" font-size="7" fill="#3a0f24" text-anchor="middle"
-        style="font-family:'Courier New',monospace;font-weight:bold;letter-spacing:.5px;">— TUNDMATU ESITAJA —</text>
+        style="font-family:'Courier New',monospace;font-weight:bold;letter-spacing:.5px;">PINKPANTHERESS &amp; ZARA LARSSON</text>
   <text id="titleText" x="193" y="200" font-size="8" fill="#3a0f24" text-anchor="middle"
-        style="font-family:'Courier New',monospace;font-weight:bold;">♪ Lugu pole valitud ♪</text>
+        style="font-family:'Courier New',monospace;font-weight:bold;">&#9834; Stateside &#9834;</text>
 
-  <!-- Volume bar (draggable rainbow) -->
   <g id="volumeGroup">
-    <!-- rainbow track -->
     <rect id="volTrack" x="168" y="209" width="50" height="3.4" rx="1.7" fill="url(#rainbowGrad)" style="cursor:pointer"/>
-    <!-- inner shadow line for groove realism -->
     <rect x="168" y="209" width="50" height="1" rx=".5" fill="#000" opacity=".25" pointer-events="none"/>
-    <!-- darken the unfilled (right) portion via overlay -->
     <rect id="volDim" x="193" y="209" width="25" height="3.4" rx="1.7" fill="#000" opacity=".45" pointer-events="none"/>
-    <!-- knob (metal) -->
     <circle id="volKnob" cx="193" cy="210.7" r="3"
             fill="url(#goldGrad)" stroke="#3a2400" stroke-width=".5" style="cursor:pointer"/>
     <circle cx="193" cy="210.7" r="1.1" fill="#fff7c8" opacity=".7" pointer-events="none"/>
-
-    <!-- Speaker icon BELOW the bar, centered -->
     <g transform="translate(189 217)" pointer-events="none">
       <polygon points="0,0 0,5 3,6 3,-1" fill="#3a1228"/>
       <path d="M5,-.5 q2.2,3 0,6 M7,-2 q3.8,5 0,9"
@@ -363,18 +318,9 @@
     </g>
   </g>
 
-  <!-- Subtle brand mark for realism -->
   <text x="200" y="232" font-size="4.2" fill="#2a0a1c" text-anchor="middle" pointer-events="none"
         style="font-family:'Helvetica Neue',Arial,sans-serif;font-weight:900;letter-spacing:2px;opacity:.55;">M  P  3</text>
 
-
-
-
-
-
-
-  <!-- BUTTONS -->
-  <!-- next_song (top) -->
   <g class="btn" data-action="next">
     <path d="M79.26,155.43c-6.53-.35-11.93-11.85-10.15-18.4,2.37-8.71,17.38-9.57,20.08-2.11,2.28,6.3-2.49,20.92-9.93,20.51Z"
       fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
@@ -385,7 +331,6 @@
     </g>
   </g>
 
-  <!-- rewind (left) -->
   <g class="btn" data-action="rewind">
     <path d="M63.47,171.1c.09-3.76-10.41-10.53-19.42-7.09-7.37,2.82-9.75,10.94-6.83,13.73,4.64,4.44,26.12-1.32,26.25-6.65Z"
       fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
@@ -395,7 +340,6 @@
     </g>
   </g>
 
-  <!-- play/stop (center) -->
   <g class="btn" data-action="play">
     <path d="M67.28,172.46c-2.36-5.35,3.69-11.89,10.68-12.17,6.43-.26,12.34,4.84,13.19,9.43.63,3.4-1.15,8.49-6.91,9.82-6.45,1.48-14.91-2.43-16.96-7.07Z"
       fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
@@ -406,7 +350,6 @@
     </g>
   </g>
 
-  <!-- fast_forward (right) -->
   <g class="btn" data-action="forward">
     <path d="M94.07,170.28c-1.38-4.73,10.64-11.58,18.87-9.67,7.75,1.8,10.51,11,4.97,14.35-6.14,3.71-22.4.25-23.84-4.68Z"
       fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
@@ -416,7 +359,6 @@
     </g>
   </g>
 
-  <!-- close/stop (bottom) -->
   <g class="btn" data-action="stop">
     <path d="M76.63,185.19c-4.97,3.72-7.28,17.9-5.22,24.13,3.1,9.38,17.22,3.94,18.27-5.22.88-7.58-6.49-23.82-13.05-18.91Z"
       fill="url(#goldGrad)" stroke="#5a3a00" stroke-width=".6" filter="url(#btnShadow)"/>
@@ -425,9 +367,30 @@
 
 </svg>
 </div>
+</div>
 
 <script>
-/* ---------------- Studs ALL the way around the screen window ---------------- */
+/* ---------------- Background floating flowers/stars ---------------- */
+(function bgDecor(){
+  const host = document.getElementById('bgDecor');
+  const glyphs = ['✿','❀','✦','✧','★','♡','❁','✺'];
+  const N = 26;
+  for (let i=0; i<N; i++){
+    const s = document.createElement('div');
+    s.className = 'bg-sparkle';
+    s.textContent = glyphs[i % glyphs.length];
+    s.style.left = (Math.random()*100) + 'vw';
+    s.style.top  = (Math.random()*100) + 'vh';
+    s.style.fontSize = (12 + Math.random()*22) + 'px';
+    s.style.opacity = (0.25 + Math.random()*0.5).toFixed(2);
+    s.style.color = ['#ffb6da','#ffd6a5','#fff3b0','#c8b6ff','#9bf6ff','#caffbf'][i%6];
+    s.style.animationDuration = (6 + Math.random()*8) + 's';
+    s.style.animationDelay = (-Math.random()*8) + 's';
+    host.appendChild(s);
+  }
+})();
+
+/* ---------------- Studs ---------------- */
 (function placeStuds(){
   const ringG = document.getElementById('studs');
   const path  = document.getElementById('studPath');
@@ -441,7 +404,6 @@
     stud.setAttribute('rx', 2.4);
     stud.setAttribute('ry', 1.7);
     stud.setAttribute('fill','url(#studHi)');
-
     stud.setAttribute('stroke','#1a1a1a');
     stud.setAttribute('stroke-width','.3');
     ringG.appendChild(stud);
@@ -464,10 +426,8 @@ const trail = (function(){
   resize();
   addEventListener('resize', resize);
 
-  const puffs = [];     // rainbow blobs
-  const sparkles = [];  // tiny white dots
-
-  // Rainbow band stops: red → violet (outer to inner)
+  const puffs = [];
+  const sparkles = [];
   const RAINBOW = [
     [0.00, 'rgba(255, 70, 70, A)'],
     [0.18, 'rgba(255,150, 60, A)'],
@@ -481,40 +441,36 @@ const trail = (function(){
   function spawn(x, y, n){
     for (let i=0; i<n; i++){
       const a = Math.random() * Math.PI * 2;
-      const sp = Math.random() * 0.18 + 0.03; // slower drift
+      const sp = Math.random() * 0.18 + 0.03;
       puffs.push({
         x: x + (Math.random()-.5)*34,
         y: y + (Math.random()-.5)*34,
         vx: Math.cos(a)*sp,
         vy: Math.sin(a)*sp - 0.03,
         life: 0,
-        ttl: 22 + Math.random()*14,
-        size: 34 + Math.random()*22, // wider, airier
+        ttl: 26 + Math.random()*16,
+        size: 36 + Math.random()*24,
       });
-      // sparse sparkles
-      if (Math.random() < 0.18){
+      if (Math.random() < 0.22){
         sparkles.push({
-          x: x + (Math.random()-.5)*36,
-          y: y + (Math.random()-.5)*36,
+          x: x + (Math.random()-.5)*40,
+          y: y + (Math.random()-.5)*40,
           life: 0,
           ttl: 14 + Math.random()*10,
-          size: 0.7 + Math.random()*1.1,
+          size: 0.7 + Math.random()*1.2,
         });
       }
     }
   }
 
   function frame(){
-    // gentle clear → softer trail
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillStyle = 'rgba(0,0,0,0.16)';
     ctx.fillRect(0,0,innerWidth,innerHeight);
     ctx.restore();
-
     ctx.globalCompositeOperation = 'lighter';
 
-    // Rainbow puffs
     for (let i=puffs.length-1; i>=0; i--){
       const p = puffs[i];
       p.life++;
@@ -522,7 +478,7 @@ const trail = (function(){
       p.x += p.vx; p.y += p.vy;
       p.vx *= 0.96; p.vy *= 0.96;
       const t = p.life / p.ttl;
-      const alpha = (1 - t) * 0.26; // airier, more rainbow visible
+      const alpha = (1 - t) * 0.28;
       const size = p.size * (1 + t*0.5);
       const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size);
       for (const [stop, tpl] of RAINBOW){
@@ -534,16 +490,15 @@ const trail = (function(){
       ctx.fill();
     }
 
-    // Sparse white sparkles
     for (let i=sparkles.length-1; i>=0; i--){
       const s = sparkles[i];
       s.life++;
       if (s.life >= s.ttl){ sparkles.splice(i,1); continue; }
       const t = s.life / s.ttl;
-      const a = (1 - t) * 0.5;
+      const a = (1 - t) * 0.6;
       ctx.fillStyle = `rgba(255,255,255,${a})`;
       ctx.shadowColor = `rgba(255,255,255,${a*0.6})`;
-      ctx.shadowBlur = 4;
+      ctx.shadowBlur = 5;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
       ctx.fill();
@@ -553,11 +508,40 @@ const trail = (function(){
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-
   return { spawn };
 })();
 
-/* ---------------- Dragging ---------------- */
+/* ---------------- Audio + Playlist ---------------- */
+const audio = document.getElementById('audio');
+const playlist = [
+  { src: 'song.mp3', artist: 'PINKPANTHERESS & ZARA LARSSON', title: '\u266A Stateside \u266A' },
+];
+let trackIndex = 0;
+function loadTrack(i){
+  trackIndex = (i + playlist.length) % playlist.length;
+  const t = playlist[trackIndex];
+  audio.src = t.src;
+  state.artist = t.artist;
+  state.title  = t.title;
+  state.elapsed = 0;
+  state.duration = 0;
+  audio.load();
+}
+audio.addEventListener('loadedmetadata', () => {
+  state.duration = audio.duration || 0;
+  window.__renderPlayer && window.__renderPlayer();
+});
+audio.addEventListener('timeupdate', () => {
+  state.elapsed = audio.currentTime;
+  window.__renderPlayer && window.__renderPlayer();
+});
+audio.addEventListener('ended', () => {
+  // Auto-advance to next track (loops back to start)
+  loadTrack(trackIndex + 1);
+  audio.play().then(() => { state.playing = true; }).catch(()=>{});
+});
+
+/* ---------------- Drag (with 3D tilt) ---------------- */
 (function dragger(){
   const el = document.getElementById('player');
   let dx=0, dy=0, dragging=false, lastX=0, lastY=0;
@@ -565,7 +549,6 @@ const trail = (function(){
     if (e.target.closest('.btn')) return;
     if (e.target.closest('#volumeGroup')) return;
     if (e.target.closest('#progressGroup')) return;
-
     dragging = true;
     el.classList.add('dragging');
     const r = el.getBoundingClientRect();
@@ -581,12 +564,22 @@ const trail = (function(){
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width/2;
     const cy = r.top + r.height/2;
-    const moveD = Math.hypot(e.clientX - lastX, e.clientY - lastY);
-    const n = Math.min(6, 1 + Math.floor(moveD / 8));
+    // 3D tilt based on velocity
+    const vx = e.clientX - lastX;
+    const vy = e.clientY - lastY;
+    const ry = Math.max(-22, Math.min(22, -vx * 1.4 - 8));
+    const rx = Math.max(-22, Math.min(28, vy * 1.2 + 14));
+    el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) scale(1.02)`;
+    const moveD = Math.hypot(vx, vy);
+    const n = Math.min(7, 1 + Math.floor(moveD / 7));
     trail.spawn(cx, cy, n);
     lastX = e.clientX; lastY = e.clientY;
   });
-  const end = () => { dragging = false; el.classList.remove('dragging'); };
+  const end = () => {
+    dragging = false;
+    el.classList.remove('dragging');
+    el.style.transform = '';
+  };
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
 })();
@@ -594,7 +587,6 @@ const trail = (function(){
 /* ---------------- Sun rays ---------------- */
 (function buildRays(){
   const g = document.getElementById('raysPulse');
-  // Wavy flame petals, alternating long / short — boho watercolor sun
   const longFlame  = 'M 0 -13 C -4 -17 -3 -22 -2 -26 C -1 -30 -5 -33 -2 -36 C 0 -38 2 -36 1 -33 C 0 -29 4 -26 3 -22 C 2 -18 4 -16 0 -13 Z';
   const shortFlame = 'M 0 -13 C -3 -16 -3 -20 -1 -23 C 0 -26 -2 -28 0 -30 C 2 -28 0 -26 1 -23 C 3 -20 3 -16 0 -13 Z';
   const count = 16;
@@ -612,15 +604,12 @@ const trail = (function(){
   }
 })();
 
-/* ---------------- Sun face texture (watercolor speckles) ---------------- */
 (function decorateSun(){
   const svgNS = 'http://www.w3.org/2000/svg';
   const parent = document.getElementById('sunGroup');
   const deco = document.createElementNS(svgNS, 'g');
   deco.setAttribute('clip-path', 'circle(11.5px at 190px 117px)');
   deco.setAttribute('pointer-events', 'none');
-
-  // Subtle inner shadow rim for watercolor depth
   const rim = document.createElementNS(svgNS, 'circle');
   rim.setAttribute('cx', 190); rim.setAttribute('cy', 117);
   rim.setAttribute('r', 11.2);
@@ -629,8 +618,6 @@ const trail = (function(){
   rim.setAttribute('stroke-width', 0.6);
   rim.setAttribute('opacity', 0.35);
   deco.appendChild(rim);
-
-  // Random tiny white speckles like the reference watercolor texture
   const seed = [0.21,0.78,0.43,0.11,0.92,0.55,0.34,0.67,0.05,0.88,0.49,0.27,0.71,0.16,0.83,0.39,0.62,0.08,0.95,0.52,0.30,0.74,0.18,0.86];
   for (let i=0; i<22; i++){
     const a = seed[i % seed.length] * Math.PI * 2 + i * 0.7;
@@ -643,7 +630,6 @@ const trail = (function(){
     dot.setAttribute('opacity', 0.7);
     deco.appendChild(dot);
   }
-
   parent.appendChild(deco);
 })();
 
@@ -651,25 +637,22 @@ const trail = (function(){
 const state = {
   playing:  false,
   sunVisible: true,
-  duration: 213,
+  duration: 0,
   elapsed:  0,
-  volume:   0.5,
-  artist:   '— TUNDMATU ESITAJA —',
-  title:    '\u266A Lugu pole valitud \u266A',
+  volume:   0.7,
+  artist:   playlist[0].artist,
+  title:    playlist[0].title,
 };
+audio.volume = state.volume;
 
-/* ---------------- Sun animation (freezes on pause) ---------------- */
+/* ---------------- Sun anim ---------------- */
 (function animate(){
   const rotateG = document.getElementById('raysRotate');
   const pulseG  = document.getElementById('raysPulse');
   const halo    = document.getElementById('sunHalo');
   const sun     = document.getElementById('sunBody');
-
-  // accumulators that only advance while playing → freeze on pause
   let lastNow = performance.now();
-  let phase = 0;    // beat phase
-  let angle = 0;    // rotation degrees
-
+  let phase = 0, angle = 0;
   function frame(now){
     const dt = (now - lastNow) / 1000;
     lastNow = now;
@@ -690,16 +673,14 @@ const state = {
   requestAnimationFrame(frame);
 })();
 
-/* ---------------- Volume slider (rainbow) ---------------- */
+/* ---------------- Volume slider ---------------- */
 (function volume(){
   const group = document.getElementById('volumeGroup');
   const knob  = document.getElementById('volKnob');
   const dim   = document.getElementById('volDim');
   const svg   = document.querySelector('#player svg');
   const X0 = 168, X1 = 218;
-
   let dragging = false;
-
   function render(){
     const x = X0 + state.volume * (X1 - X0);
     knob.setAttribute('cx', x);
@@ -711,6 +692,7 @@ const state = {
     pt.x = e.clientX; pt.y = e.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
     state.volume = Math.max(0, Math.min(1, (loc.x - X0) / (X1 - X0)));
+    audio.volume = state.volume;
     render();
   }
   group.addEventListener('pointerdown', e => {
@@ -726,20 +708,21 @@ const state = {
   render();
 })();
 
-/* ---------------- Progress bar (draggable scrub) ---------------- */
+/* ---------------- Progress scrub ---------------- */
 (function progress(){
   const group = document.getElementById('progressGroup');
   const svg   = document.querySelector('#player svg');
   const X0 = 148, X1 = 238;
-
   let dragging = false;
-
   function setFromEvent(e){
     const pt = svg.createSVGPoint();
     pt.x = e.clientX; pt.y = e.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
     const pct = Math.max(0, Math.min(1, (loc.x - X0) / (X1 - X0)));
-    state.elapsed = pct * state.duration;
+    if (state.duration > 0){
+      state.elapsed = pct * state.duration;
+      audio.currentTime = state.elapsed;
+    }
     window.__renderPlayer && window.__renderPlayer();
   }
   group.addEventListener('pointerdown', e => {
@@ -773,41 +756,42 @@ const state = {
     titleEl.textContent  = state.title;
     artistEl.textContent = state.artist;
     elapsedEl.textContent = fmt(state.elapsed);
-    remainEl.textContent  = '-' + fmt(state.duration - state.elapsed);
+    remainEl.textContent  = '-' + fmt(Math.max(0, state.duration - state.elapsed));
     const pct = state.duration ? state.elapsed / state.duration : 0;
     const x = 148 + pct * 90;
     fill.setAttribute('width', pct * 90);
     knob.setAttribute('points', `${x},185 ${x+3},182 ${x-3},182`);
-
     sunGroup.style.display = state.sunVisible ? '' : 'none';
   }
   window.__renderPlayer = render;
   render();
 
-  setInterval(() => {
-    if (state.playing){
-      state.elapsed = Math.min(state.duration, state.elapsed + 1);
-      if (state.elapsed >= state.duration) state.playing = false;
-      render();
-    }
-  }, 1000);
-
   document.querySelectorAll('.btn').forEach(b => {
     b.addEventListener('click', () => {
       const a = b.dataset.action;
       switch(a){
-        case 'play':    state.playing = !state.playing; break;
-        case 'stop':    state.sunVisible = !state.sunVisible; break;
-        case 'next':    state.elapsed = 0; break;
-        case 'rewind':  state.elapsed = Math.max(0, state.elapsed - 10); break;
-        case 'forward': state.elapsed = Math.min(state.duration, state.elapsed + 10); break;
+        case 'play':
+          if (audio.paused){ audio.play().then(()=>{ state.playing = true; render(); }).catch(()=>{}); }
+          else { audio.pause(); state.playing = false; }
+          break;
+        case 'stop':
+          state.sunVisible = !state.sunVisible;
+          break;
+        case 'next':
+          loadTrack(trackIndex + 1);
+          audio.play().then(()=>{ state.playing = true; render(); }).catch(()=>{});
+          break;
+        case 'rewind':
+          audio.currentTime = Math.max(0, audio.currentTime - 10);
+          break;
+        case 'forward':
+          audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10);
+          break;
       }
       render();
     });
   });
 })();
-
-
 </script>
 </body>
 </html>
